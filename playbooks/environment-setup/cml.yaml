@@ -1,0 +1,58 @@
+---
+- name: Stand up lab in CML
+  hosts: localhost
+  tasks:
+    - name: Stop CML lab if it exists
+      cisco.cml.cml_lab:
+        host: "{{ cml_host }}"
+        user: "{{ cml_username }}"
+        password: "{{ cml_password }}"
+        lab: "Pluralsight ITSM Course"
+        state: "stopped"
+    - name: Wipe CML lab if it exists
+      cisco.cml.cml_lab:
+        host: "{{ cml_host }}"
+        user: "{{ cml_username }}"
+        password: "{{ cml_password }}"
+        lab: "Pluralsight ITSM Course"
+        state: "wiped"
+    - name: Remove CML lab if it exists
+      cisco.cml.cml_lab:
+        host: "{{ cml_host }}"
+        user: "{{ cml_username }}"
+        password: "{{ cml_password }}"
+        lab: "Pluralsight ITSM Course"
+        state: "absent"
+    - name: Create CML lab
+      cisco.cml.cml_lab:
+        host: "{{ cml_host }}"
+        user: "{{ cml_username }}"
+        password: "{{ cml_password }}"
+        lab: "Pluralsight ITSM Course"
+        state: "present"
+        file: "{{ playbook_dir }}/../../files/{{ cml_lab_filename }}"
+    - name: Collect facts about CML lab
+      cisco.cml.cml_lab_facts:
+        host: "{{ cml_host }}"
+        user: "{{ cml_username }}"
+        password: "{{ cml_password }}"
+        lab: "Pluralsight ITSM Course"
+      register: lab_results
+    - name: Stop nodes within CML lab if they're running
+      cisco.cml.cml_node:
+        host: "{{ cml_host }}"
+        user: "{{ cml_username }}"
+        password: "{{ cml_password }}"
+        lab: "Pluralsight ITSM Course"
+        state: "stopped"
+        name: "{{ item }}"
+      with_items: "{{ lab_results.cml_facts.nodes.keys() | list }}"
+    - name: Start nodes within CML lab
+      cisco.cml.cml_node:
+        host: "{{ cml_host }}"
+        user: "{{ cml_username }}"
+        password: "{{ cml_password }}"
+        lab: "Pluralsight ITSM Course"
+        state: "started"
+        name: "{{ item }}"
+      with_items: "{{ lab_results.cml_facts.nodes.keys() | list }}"

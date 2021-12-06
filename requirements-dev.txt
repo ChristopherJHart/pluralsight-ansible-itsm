@@ -3,3 +3,4 @@ black
 flake8
 ansible-lint
 pre-commit
+virl2_client

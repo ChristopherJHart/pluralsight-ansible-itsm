@@ -1,1 +1,6 @@
 ---
+all:
+  children:
+    cml:
+      hosts:
+        cml.chrisjhart.net
