@@ -112,9 +112,13 @@ nodes:
        address-family ipv4
        exit-address-family
       ip host atlanta.chrisjhart.net 1.1.1.1 2.2.2.1 192.168.1.1 100.1.1.1
+      ip host atlanta-host.chrisjhart.net 192.168.1.10
       ip host boston.chrisjhart.net 3.3.3.2 4.4.4.2 192.168.4.1 100.4.4.4
+      ip host boston-host.chrisjhart.net 192.168.4.10
       ip host charlotte.chrisjhart.net 1.1.1.2 4.4.4.1 192.168.2.1 100.2.2.2
+      ip host charlotte-host.chrisjhart.net 192.168.2.10
       ip host nashville.chrisjhart.net 3.3.3.1 2.2.2.2 192.168.3.1 100.3.3.3
+      ip host nashville-host.chrisjhart.net 192.168.3.10
       interface GigabitEthernet1
        no shutdown
        vrf forwarding management
@@ -195,10 +199,13 @@ nodes:
        address-family ipv4
        exit-address-family
       ip host atlanta.chrisjhart.net 1.1.1.1 2.2.2.1 192.168.1.1 100.1.1.1
+      ip host atlanta-host.chrisjhart.net 192.168.1.10
       ip host boston.chrisjhart.net 3.3.3.2 4.4.4.2 192.168.4.1 100.4.4.4
+      ip host boston-host.chrisjhart.net 192.168.4.10
       ip host charlotte.chrisjhart.net 1.1.1.2 4.4.4.1 192.168.2.1 100.2.2.2
-      ip host host.chrisjhart.net 192.168.1.10 192.168.2.10 192.168.3.10 192.168.4.10
+      ip host charlotte-host.chrisjhart.net 192.168.2.10
       ip host nashville.chrisjhart.net 3.3.3.1 2.2.2.2 192.168.3.1 100.3.3.3
+      ip host nashville-host.chrisjhart.net 192.168.3.10
       interface GigabitEthernet1
        no shutdown
        vrf forwarding management
@@ -279,10 +286,13 @@ nodes:
        address-family ipv4
        exit-address-family
       ip host atlanta.chrisjhart.net 1.1.1.1 2.2.2.1 192.168.1.1 100.1.1.1
+      ip host atlanta-host.chrisjhart.net 192.168.1.10
       ip host boston.chrisjhart.net 3.3.3.2 4.4.4.2 192.168.4.1 100.4.4.4
+      ip host boston-host.chrisjhart.net 192.168.4.10
       ip host charlotte.chrisjhart.net 1.1.1.2 4.4.4.1 192.168.2.1 100.2.2.2
-      ip host host.chrisjhart.net 192.168.1.10 192.168.2.10 192.168.3.10 192.168.4.10
+      ip host charlotte-host.chrisjhart.net 192.168.2.10
       ip host nashville.chrisjhart.net 3.3.3.1 2.2.2.2 192.168.3.1 100.3.3.3
+      ip host nashville-host.chrisjhart.net 192.168.3.10
       interface GigabitEthernet1
        no shutdown
        vrf forwarding management
@@ -379,10 +389,13 @@ nodes:
        address-family ipv4
        exit-address-family
       ip host atlanta.chrisjhart.net 1.1.1.1 2.2.2.1 192.168.1.1 100.1.1.1
+      ip host atlanta-host.chrisjhart.net 192.168.1.10
       ip host boston.chrisjhart.net 3.3.3.2 4.4.4.2 192.168.4.1 100.4.4.4
+      ip host boston-host.chrisjhart.net 192.168.4.10
       ip host charlotte.chrisjhart.net 1.1.1.2 4.4.4.1 192.168.2.1 100.2.2.2
-      ip host host.chrisjhart.net 192.168.1.10 192.168.2.10 192.168.3.10 192.168.4.10
+      ip host charlotte-host.chrisjhart.net 192.168.2.10
       ip host nashville.chrisjhart.net 3.3.3.1 2.2.2.2 192.168.3.1 100.3.3.3
+      ip host nashville-host.chrisjhart.net 192.168.3.10
       interface GigabitEthernet1
        no shutdown
        vrf forwarding management
