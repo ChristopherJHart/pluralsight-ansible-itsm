@@ -1,7 +1,7 @@
 lab:
   description: ''
   notes: ''
-  timestamp: 1638750413.7086864
+  timestamp: 1638755467.0307503
   title: Pluralsight ITSM Course
   version: 0.0.4
 nodes:
@@ -314,12 +314,12 @@ nodes:
         label: GigabitEthernet4
         type: physical
   - id: n4
-    label: Atlanta Host
+    label: Host
     node_definition: csr1000v
-    x: -650
-    y: -150
+    x: -300
+    y: -50
     configuration: |-
-      hostname Atlanta-Host
+      hostname Host
       no ip domain-lookup
       username christopher privilege 15 password cisco!123
       service timestamps debug datetime msec year
@@ -340,203 +340,22 @@ nodes:
        ip address 192.168.1.10 255.255.255.0
        no ip redirects
       interface GigabitEthernet3
-       shutdown
-      interface GigabitEthernet4
-       shutdown
-      ip route vrf management 0.0.0.0 0.0.0.0 192.168.10.1
-      ip ssh rsa keypair-name RSA_SSH
-      ip ssh version 2
-      line con 0
-       exec-timeout 0 0
-       privilege level 15
-       logging synchronous
-      line vty 0 15
-       exec-timeout 0 0
-       logging synchronous
-       login local
-       transport input ssh
-      end
-    image_definition: csr1000v-161101b
-    tags: []
-    interfaces:
-      - id: i0
-        label: Loopback0
-        type: loopback
-      - id: i1
-        slot: 0
-        label: GigabitEthernet1
-        type: physical
-      - id: i2
-        slot: 1
-        label: GigabitEthernet2
-        type: physical
-      - id: i3
-        slot: 2
-        label: GigabitEthernet3
-        type: physical
-      - id: i4
-        slot: 3
-        label: GigabitEthernet4
-        type: physical
-  - id: n5
-    label: Charlotte Host
-    node_definition: csr1000v
-    x: 100
-    y: -150
-    configuration: |-
-      hostname Charlotte-Host
-      no ip domain-lookup
-      username christopher privilege 15 password cisco!123
-      service timestamps debug datetime msec year
-      service timestamps log datetime msec year
-      ip domain-name chrisjhart.net
-      crypto key generate rsa modulus 2048 label RSA_SSH
-      vrf definition management
-       !
-       address-family ipv4
-       exit-address-family
-      interface GigabitEthernet1
-       no shutdown
-       vrf forwarding management
-       ip address 192.168.10.205 255.255.255.0
-       no ip redirects
-      interface GigabitEthernet2
        no shutdown
        ip address 192.168.2.10 255.255.255.0
        no ip redirects
-      interface GigabitEthernet3
-       shutdown
       interface GigabitEthernet4
-       shutdown
-      ip route vrf management 0.0.0.0 0.0.0.0 192.168.10.1
-      ip ssh rsa keypair-name RSA_SSH
-      ip ssh version 2
-      line con 0
-       exec-timeout 0 0
-       privilege level 15
-       logging synchronous
-      line vty 0 15
-       exec-timeout 0 0
-       logging synchronous
-       login local
-       transport input ssh
-      end
-    image_definition: csr1000v-161101b
-    tags: []
-    interfaces:
-      - id: i0
-        label: Loopback0
-        type: loopback
-      - id: i1
-        slot: 0
-        label: GigabitEthernet1
-        type: physical
-      - id: i2
-        slot: 1
-        label: GigabitEthernet2
-        type: physical
-      - id: i3
-        slot: 2
-        label: GigabitEthernet3
-        type: physical
-      - id: i4
-        slot: 3
-        label: GigabitEthernet4
-        type: physical
-  - id: n6
-    label: Nashville Host
-    node_definition: csr1000v
-    x: -650
-    y: 50
-    configuration: |-
-      hostname Nashville-Host
-      no ip domain-lookup
-      username christopher privilege 15 password cisco!123
-      service timestamps debug datetime msec year
-      service timestamps log datetime msec year
-      ip domain-name chrisjhart.net
-      crypto key generate rsa modulus 2048 label RSA_SSH
-      vrf definition management
-       !
-       address-family ipv4
-       exit-address-family
-      interface GigabitEthernet1
-       no shutdown
-       vrf forwarding management
-       ip address 192.168.10.206 255.255.255.0
-       no ip redirects
-      interface GigabitEthernet2
        no shutdown
        ip address 192.168.3.10 255.255.255.0
        no ip redirects
-      interface GigabitEthernet3
-       shutdown
-      interface GigabitEthernet4
-       shutdown
-      ip route vrf management 0.0.0.0 0.0.0.0 192.168.10.1
-      ip ssh rsa keypair-name RSA_SSH
-      ip ssh version 2
-      line con 0
-       exec-timeout 0 0
-       privilege level 15
-       logging synchronous
-      line vty 0 15
-       exec-timeout 0 0
-       logging synchronous
-       login local
-       transport input ssh
-      end
-    image_definition: csr1000v-161101b
-    tags: []
-    interfaces:
-      - id: i0
-        label: Loopback0
-        type: loopback
-      - id: i1
-        slot: 0
-        label: GigabitEthernet1
-        type: physical
-      - id: i2
-        slot: 1
-        label: GigabitEthernet2
-        type: physical
-      - id: i3
-        slot: 2
-        label: GigabitEthernet3
-        type: physical
-      - id: i4
-        slot: 3
-        label: GigabitEthernet4
-        type: physical
-  - id: n7
-    label: Boston Host
-    node_definition: csr1000v
-    x: 100
-    y: 50
-    configuration: |-
-      hostname Boston-Host
-      no ip domain-lookup
-      username christopher privilege 15 password cisco!123
-      service timestamps debug datetime msec year
-      service timestamps log datetime msec year
-      ip domain-name chrisjhart.net
-      crypto key generate rsa modulus 2048 label RSA_SSH
-      vrf definition management
-       !
-       address-family ipv4
-       exit-address-family
-      interface GigabitEthernet1
-       no shutdown
-       vrf forwarding management
-       ip address 192.168.10.207 255.255.255.0
-       no ip redirects
-      interface GigabitEthernet2
+      interface GigabitEthernet5
        no shutdown
        ip address 192.168.4.10 255.255.255.0
        no ip redirects
-      interface GigabitEthernet3
+      interface GigabitEthernet6
        shutdown
-      interface GigabitEthernet4
+      interface GigabitEthernet7
+       shutdown
+      interface GigabitEthernet8
        shutdown
       ip route vrf management 0.0.0.0 0.0.0.0 192.168.10.1
       ip ssh rsa keypair-name RSA_SSH
@@ -572,6 +391,22 @@ nodes:
       - id: i4
         slot: 3
         label: GigabitEthernet4
+        type: physical
+      - id: i5
+        slot: 4
+        label: GigabitEthernet5
+        type: physical
+      - id: i6
+        slot: 5
+        label: GigabitEthernet6
+        type: physical
+      - id: i7
+        slot: 6
+        label: GigabitEthernet7
+        type: physical
+      - id: i8
+        slot: 7
+        label: GigabitEthernet8
         type: physical
   - id: n8
     label: Management Switch
@@ -650,16 +485,6 @@ links:
     n1: n8
     i2: i1
     n2: n1
-  - id: l4
-    i1: i4
-    n1: n8
-    i2: i1
-    n2: n5
-  - id: l5
-    i1: i5
-    n1: n8
-    i2: i1
-    n2: n6
   - id: l6
     i1: i6
     n1: n8
@@ -670,11 +495,6 @@ links:
     n1: n8
     i2: i1
     n2: n3
-  - id: l8
-    i1: i8
-    n1: n8
-    i2: i1
-    n2: n7
   - id: l9
     i1: i2
     n1: n0
@@ -700,18 +520,18 @@ links:
     n1: n4
     i2: i4
     n2: n0
-  - id: l14
-    i1: i2
-    n1: n5
+  - id: l4
+    i1: i3
+    n1: n4
     i2: i4
     n2: n1
-  - id: l15
-    i1: i2
-    n1: n7
-    i2: i4
-    n2: n3
-  - id: l16
-    i1: i2
-    n1: n6
+  - id: l5
+    i1: i4
+    n1: n4
     i2: i4
     n2: n2
+  - id: l8
+    i1: i5
+    n1: n4
+    i2: i4
+    n2: n3
