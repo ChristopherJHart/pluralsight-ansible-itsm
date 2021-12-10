@@ -330,6 +330,22 @@ nodes:
        !
        address-family ipv4
        exit-address-family
+      vrf definition atlanta
+       !
+       address-family ipv4
+       exit-address-family
+      vrf definition charlotte
+       !
+       address-family ipv4
+       exit-address-family
+      vrf definition nashville
+       !
+       address-family ipv4
+       exit-address-family
+      vrf definition boston
+       !
+       address-family ipv4
+       exit-address-family
       interface GigabitEthernet1
        no shutdown
        vrf forwarding management
@@ -337,18 +353,22 @@ nodes:
        no ip redirects
       interface GigabitEthernet2
        no shutdown
+       vrf forwarding atlanta
        ip address 192.168.1.10 255.255.255.0
        no ip redirects
       interface GigabitEthernet3
        no shutdown
+       vrf forwarding charlotte
        ip address 192.168.2.10 255.255.255.0
        no ip redirects
       interface GigabitEthernet4
        no shutdown
+       vrf forwarding nashville
        ip address 192.168.3.10 255.255.255.0
        no ip redirects
       interface GigabitEthernet5
        no shutdown
+       vrf forwarding boston
        ip address 192.168.4.10 255.255.255.0
        no ip redirects
       interface GigabitEthernet6
