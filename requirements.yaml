@@ -1,3 +1,6 @@
 ---
 collections:
-  - servicenow.itsm
+  - name: "servicenow.itsm"
+    version: "1.2.0"
+  - name: "community.general"
+    version: "4.1.0"
