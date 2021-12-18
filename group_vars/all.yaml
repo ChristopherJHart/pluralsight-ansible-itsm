@@ -12,3 +12,6 @@ servicenow_username: "ansible"
 servicenow_password: "Password!123"
 
 # Jira-related variables
+jira_uri: "https://chrisjhart.atlassian.net"
+jira_username: "christopherjhart95@gmail.com"
+jira_password: "7JCLs2zff9jPEUYim2Ki699F"
