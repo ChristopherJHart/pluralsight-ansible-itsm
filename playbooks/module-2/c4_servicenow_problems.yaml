@@ -1,0 +1,93 @@
+---
+- name: Create, update, and close a ServiceNow problem
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Create ServiceNow problem
+      servicenow.itsm.problem:
+        instance:
+          host: "{{ servicenow_host }}"
+          username: "{{ servicenow_username }}"
+          password: "{{ servicenow_password }}"
+        state: "new"
+        short_description: >
+          Problem automatically opened by Ansible demonstrating how Ansible
+          can work a problem.
+        impact: "low"
+        urgency: "low"
+        other:
+          watch_list:
+            - "christopher.hart"
+      register: results
+    - ansible.builtin.pause:
+        prompt: "Press 'Enter' to continue with playbook"
+    - ansible.builtin.debug:
+        var: results
+    - ansible.builtin.pause:
+        prompt: "Press 'Enter' to continue with playbook"
+    - ansible.builtin.debug:
+        var: results.record.number
+    - ansible.builtin.pause:
+        prompt: "Press 'Enter' to continue with playbook"
+    - name: Assign ServiceNow problem to Ansible
+      servicenow.itsm.problem:
+        instance:
+          host: "{{ servicenow_host }}"
+          username: "{{ servicenow_username }}"
+          password: "{{ servicenow_password }}"
+        number: "{{ results.record.number }}"
+        assigned_to: "ansible"
+    - ansible.builtin.pause:
+        prompt: "Press 'Enter' to continue with playbook"
+    - name: Change status of ServiceNow problem to Assess
+      servicenow.itsm.problem:
+        instance:
+          host: "{{ servicenow_host }}"
+          username: "{{ servicenow_username }}"
+          password: "{{ servicenow_password }}"
+        number: "{{ results.record.number }}"
+        assigned_to: "ansible"
+        state: "assess"
+        other:
+          work_notes: Attempting to confirm issue exists.
+    - ansible.builtin.pause:
+        prompt: "Press 'Enter' to continue with playbook"
+    - name: Change status of ServiceNow problem to Root Cause Analysis
+      servicenow.itsm.problem:
+        instance:
+          host: "{{ servicenow_host }}"
+          username: "{{ servicenow_username }}"
+          password: "{{ servicenow_password }}"
+        number: "{{ results.record.number }}"
+        assigned_to: "ansible"
+        state: "root_cause_analysis"
+        other:
+          work_notes: Attempting to automatically identify root cause of issue.
+    - ansible.builtin.pause:
+        prompt: "Press 'Enter' to continue with playbook"
+    - name: Change status of ServiceNow problem to Fix in Progress
+      servicenow.itsm.problem:
+        instance:
+          host: "{{ servicenow_host }}"
+          username: "{{ servicenow_username }}"
+          password: "{{ servicenow_password }}"
+        number: "{{ results.record.number }}"
+        assigned_to: "ansible"
+        state: "fix_in_progress"
+        cause_notes: >
+          Found that device configuration was partially applied, some
+          configuration was missing.
+        fix_notes: >
+          Resolved issue by applying missing configuration to device.
+    - ansible.builtin.pause:
+        prompt: "Press 'Enter' to continue with playbook"
+    - name: Resolve ServiceNow problem
+      servicenow.itsm.problem:
+        instance:
+          host: "{{ servicenow_host }}"
+          username: "{{ servicenow_username }}"
+          password: "{{ servicenow_password }}"
+        number: "{{ results.record.number }}"
+        assigned_to: "ansible"
+        state: "resolved"
+        resolution_code: "fix_applied"

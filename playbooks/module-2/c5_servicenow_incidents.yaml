@@ -1,0 +1,72 @@
+---
+- name: Create, update, and close ServiceNow incident
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Create ServiceNow incident
+      servicenow.itsm.incident:
+        instance:
+          host: "{{ servicenow_host }}"
+          username: "{{ servicenow_username }}"
+          password: "{{ servicenow_password }}"
+        state: "new"
+        caller: "ansible"
+        short_description: >
+          Incident automatically opened by Ansible demonstrating how Ansible
+          can work an incident.
+        impact: "low"
+        urgency: "low"
+        other:
+          watch_list:
+            - "christopher.hart"
+      register: results
+    - ansible.builtin.pause:
+        prompt: "Press 'Enter' to continue with playbook"
+    - ansible.builtin.debug:
+        var: results.record.number
+    - ansible.builtin.pause:
+        prompt: "Press 'Enter' to continue with playbook"
+    - name: Assign ServiceNow incident to Ansible
+      servicenow.itsm.incident:
+        instance:
+          host: "{{ servicenow_host }}"
+          username: "{{ servicenow_username }}"
+          password: "{{ servicenow_password }}"
+        number: "{{ results.record.number }}"
+        other:
+          assigned_to: "ansible"
+    - ansible.builtin.pause:
+        prompt: "Press 'Enter' to continue with playbook"
+    - name: Change status of ServiceNow incident to In-Progress
+      servicenow.itsm.incident:
+        instance:
+          host: "{{ servicenow_host }}"
+          username: "{{ servicenow_username }}"
+          password: "{{ servicenow_password }}"
+        number: "{{ results.record.number }}"
+        state: "in_progress"
+    - ansible.builtin.pause:
+        prompt: "Press 'Enter' to continue with playbook"
+    - name: Add notes to ServiceNow incident
+      servicenow.itsm.incident:
+        instance:
+          host: "{{ servicenow_host }}"
+          username: "{{ servicenow_username }}"
+          password: "{{ servicenow_password }}"
+        number: "{{ results.record.number }}"
+        other:
+          work_notes: >
+            We did some work to troubleshoot this issue further, but have not
+            yet determined the root cause of the issue.
+    - ansible.builtin.pause:
+        prompt: "Press 'Enter' to continue with playbook"
+    - name: Close ServiceNow incident
+      servicenow.itsm.incident:
+        instance:
+          host: "{{ servicenow_host }}"
+          username: "{{ servicenow_username }}"
+          password: "{{ servicenow_password }}"
+        number: "{{ results.record.number }}"
+        state: "closed"
+        close_code: "Solved (Permanently)"
+        close_notes: "Issue solved, closing incident via automation."

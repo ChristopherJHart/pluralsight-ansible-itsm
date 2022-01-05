@@ -1,0 +1,80 @@
+---
+- name: Create, update, and close ServiceNow change request
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Create ServiceNow change request
+      servicenow.itsm.change_request:
+        instance:
+          host: "{{ servicenow_host }}"
+          username: "{{ servicenow_username }}"
+          password: "{{ servicenow_password }}"
+        state: "new"
+        type: "standard"
+        requested_by: "ansible"
+        short_description: >
+          Change request automatically opened by Ansible demonstrating how
+          Ansible can work a change request.
+        description: >
+          Change request automatically opened by Ansible demonstrating how
+          Ansible can work a change request.
+        priority: "moderate"
+        risk: "low"
+        impact: "low"
+      register: results
+    - ansible.builtin.pause:
+        prompt: "Press 'Enter' to continue with playbook"
+    - ansible.builtin.debug:
+        var: results.record.number
+    - ansible.builtin.pause:
+        prompt: "Press 'Enter' to continue with playbook"
+    - name: Schedule ServiceNow change request
+      servicenow.itsm.change_request:
+        instance:
+          host: "{{ servicenow_host }}"
+          username: "{{ servicenow_username }}"
+          password: "{{ servicenow_password }}"
+        number: "{{ results.record.number }}"
+        state: "scheduled"
+        assignment_group: "Network"
+        other:
+          assigned_to: "ansible"
+          start_date: "2022-01-03 14:00:00"  # UTC timezone
+          end_date: "2022-01-03 15:00:00"  # UTC timezone
+    - ansible.builtin.pause:
+        prompt: "Press 'Enter' to continue with playbook"
+    - name: Change status of ServiceNow change request to Implement
+      servicenow.itsm.change_request:
+        instance:
+          host: "{{ servicenow_host }}"
+          username: "{{ servicenow_username }}"
+          password: "{{ servicenow_password }}"
+        number: "{{ results.record.number }}"
+        state: "implement"
+        assignment_group: "Network"
+        other:
+          work_notes: "Implemented change request as desired."
+    - ansible.builtin.pause:
+        prompt: "Press 'Enter' to continue with playbook"
+    - name: Change status of ServiceNow change request to Review
+      servicenow.itsm.change_request:
+        instance:
+          host: "{{ servicenow_host }}"
+          username: "{{ servicenow_username }}"
+          password: "{{ servicenow_password }}"
+        number: "{{ results.record.number }}"
+        state: "review"
+        assignment_group: "Network"
+    - ansible.builtin.pause:
+        prompt: "Press 'Enter' to continue with playbook"
+    - name: Change status of ServiceNow change request to Closed
+      servicenow.itsm.change_request:
+        instance:
+          host: "{{ servicenow_host }}"
+          username: "{{ servicenow_username }}"
+          password: "{{ servicenow_password }}"
+        number: "{{ results.record.number }}"
+        state: "closed"
+        assignment_group: "Network"
+        close_code: "successful"
+        close_notes: "Change request implemented and can be closed."
