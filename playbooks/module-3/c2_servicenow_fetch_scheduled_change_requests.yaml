@@ -27,6 +27,8 @@
     - name: Show playbook execution date
       ansible.builtin.debug:
         var: ansible_date_time.iso8601
+    - ansible.builtin.pause:
+        prompt: "Press 'Enter' to continue with playbook"
     - name: Schedule ServiceNow change request to implement OSPF changes
       servicenow.itsm.change_request:
         instance:
@@ -51,6 +53,8 @@
           in Boston. Scheduled start date is
           {{ created_cr_results.record.start_date }} and scheduled end date is
           {{ created_cr_results.record.end_date }}.
+    - ansible.builtin.pause:
+        prompt: "Press 'Enter' to continue with playbook"
 - name: Fetch ServiceNow change requests created
   hosts: localhost
   gather_facts: true
@@ -75,6 +79,8 @@
         Request's end date
       ansible.builtin.debug:
         var: playbook_execution_time
+    - ansible.builtin.pause:
+        prompt: "Press 'Enter' to continue with playbook"
     - name: Fetch recent ServiceNow change requests
       servicenow.itsm.change_request_info:
         instance:
@@ -90,6 +96,8 @@
         msg: >-
           Found {{ cr_results.records | length }} Change Request(s) matching
           conditions
+    - ansible.builtin.pause:
+        prompt: "Press 'Enter' to continue with playbook"
     - name: End playbook if no Change Requests exist
       ansible.builtin.meta: end_play
       when: cr_results.records | length == 0
@@ -102,6 +110,8 @@
       with_items: "{{ cr_results.records }}"
       loop_control:
         label: "{{ item.number }}"
+    - ansible.builtin.pause:
+        prompt: "Press 'Enter' to continue with playbook"
     - name: Assign Change Request to Ansible and update notes
       servicenow.itsm.change_request:
         instance:
