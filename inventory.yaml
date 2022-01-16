@@ -3,13 +3,13 @@ all:
   children:
     cml:
       hosts:
-        cml.chrisjhart.net
+        cml.chrisjhart.net:
     routers:
       hosts:
-        atlanta.chrisjhart.net
-        charlotte.chrisjhart.net
-        nashville.chrisjhart.net
-        boston.chrisjhart.net
+        atlanta.chrisjhart.net:
+        charlotte.chrisjhart.net:
+        nashville.chrisjhart.net:
+        boston.chrisjhart.net:
     servers:
       hosts:
-        host.chrisjhart.net
+        host.chrisjhart.net:
