@@ -63,7 +63,7 @@
       ansible.builtin.set_fact:
         change_request_start_date_threshold: >-
           {{ ansible_date_time.iso8601
-          | modify_time(modifier='subtract', seconds=30) }}
+          | modify_time(modifier='subtract', minutes=1) }}
     - name: >-
         Define playbook execution time, which should be before a scheduled
         Change Request's end date
