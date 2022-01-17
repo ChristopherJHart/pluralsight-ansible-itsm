@@ -34,9 +34,6 @@
         other:
           cmdb_ci: "f3b56a0807010110631efc289c1ed037"
       register: created_cr_results
-    - name: Show playbook execution date
-      ansible.builtin.debug:
-        var: ansible_date_time.iso8601
     - name: Schedule ServiceNow change request to implement OSPF changes
       servicenow.itsm.change_request:
         instance:
@@ -77,14 +74,6 @@
         playbook_execution_time: >-
           {{ ansible_date_time.iso8601
           | iso8601_to_servicenow_datetime_format }}
-    - name: Show scheduled Change Request start date
-      ansible.builtin.debug:
-        var: change_request_start_date_threshold
-    - name: >-
-        Show playbook execution time, which should be before a scheduled Change
-        Request's end date
-      ansible.builtin.debug:
-        var: playbook_execution_time
     - name: Fetch recent ServiceNow change requests
       servicenow.itsm.change_request_info:
         instance:
@@ -126,9 +115,6 @@
           work_notes: >-
             Implementing OSPF configuration change based on information in
             Change Request.
-    - name: Show Change Request record details
-      ansible.builtin.debug:
-        var: cr_results.records[0]
     - ansible.builtin.pause:
         prompt: "Press 'Enter' to continue with playbook"
     - name: Fetch Configuration Item for IP Network
@@ -140,8 +126,6 @@
         sys_class_name: "cmdb_ci_ip_network"
         sys_id: "{{ cr_results.records[0].cmdb_ci }}"
       register: ci_ip_network_results
-    - ansible.builtin.debug:
-        var: ci_ip_network_results
     - ansible.builtin.pause:
         prompt: "Press 'Enter' to continue with playbook"
     - ansible.builtin.set_fact:
@@ -151,10 +135,6 @@
         wildcard_mask: >-
           {{ ci_ip_network_results.records[0].subnet
           | ansible.netcommon.ipaddr('hostmask') }}
-    - ansible.builtin.debug:
-        var: network_address
-    - ansible.builtin.debug:
-        var: wildcard_mask
     - ansible.builtin.pause:
         prompt: "Press 'Enter' to continue with playbook"
     - name: Fetch Configuration item for Router
@@ -166,14 +146,10 @@
         sys_class_name: "cmdb_ci_ip_router"
         sys_id: "{{ ci_ip_network_results.records[0].router }}"
       register: ci_router_results
-    - ansible.builtin.debug:
-        var: ci_router_results
     - ansible.builtin.pause:
         prompt: "Press 'Enter' to continue with playbook"
     - ansible.builtin.set_fact:
         router_to_configure: "{{ ci_router_results.records[0].ip_address }}"
-    - ansible.builtin.debug:
-        var: router_to_configure
     - ansible.builtin.pause:
         prompt: "Press 'Enter' to continue with playbook"
 - name: Apply OSPF host-facing configuration to relevant router
