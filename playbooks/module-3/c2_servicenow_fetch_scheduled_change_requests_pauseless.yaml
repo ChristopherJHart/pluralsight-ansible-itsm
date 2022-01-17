@@ -1,0 +1,118 @@
+---
+- name: Create and schedule ServiceNow change request to implement OSPF changes
+  hosts: localhost
+  gather_facts: true
+  tasks:
+    - name: Create ServiceNow change request to implement OSPF changes
+      servicenow.itsm.change_request:
+        instance:
+          host: "{{ servicenow_host }}"
+          username: "{{ servicenow_username }}"
+          password: "{{ servicenow_password }}"
+        state: "new"
+        type: "standard"
+        requested_by: "ansible"
+        short_description: >
+          Activate OSPF on Boston's host-facing GigabitEthernet4 interface
+        description: >
+          To finish provisioning our new Boston branch office, we need to
+          activate OSPF on the Boston router's host-facing GigabitEthernet4
+          interface using Ansible.
+        priority: "moderate"
+        risk: "low"
+        impact: "low"
+        other:
+          cmdb_ci: "f3b56a0807010110631efc289c1ed037"
+      register: created_cr_results
+    - name: Show playbook execution date
+      ansible.builtin.debug:
+        var: ansible_date_time.iso8601
+    - name: Schedule ServiceNow change request to implement OSPF changes
+      servicenow.itsm.change_request:
+        instance:
+          host: "{{ servicenow_host }}"
+          username: "{{ servicenow_username }}"
+          password: "{{ servicenow_password }}"
+        number: "{{ created_cr_results.record.number }}"
+        state: "scheduled"
+        assignment_group: "Network"
+        other:
+          start_date: >-
+            {{ ansible_date_time.iso8601
+            | iso8601_to_servicenow_datetime_format }}
+          end_date: >-
+            {{ ansible_date_time.iso8601
+            | modify_time(modifier='add', hours=1) }}
+      register: created_cr_results
+    - ansible.builtin.debug:
+        msg: >-
+          Created and scheduled {{ created_cr_results.record.number }} at
+          {{ created_cr_results.record.opened_at }} to implement OSPF changes
+          in Boston. Scheduled start date is
+          {{ created_cr_results.record.start_date }} and scheduled end date is
+          {{ created_cr_results.record.end_date }}.
+- name: Fetch ServiceNow change requests created
+  hosts: localhost
+  gather_facts: true
+  tasks:
+    - name: Define threshold datetime for scheduled Change Request start date
+      ansible.builtin.set_fact:
+        change_request_start_date_threshold: >-
+          {{ ansible_date_time.iso8601
+          | modify_time(modifier='subtract', minutes=1) }}
+    - name: >-
+        Define playbook execution time, which should be before a scheduled
+        Change Request's end date
+      ansible.builtin.set_fact:
+        playbook_execution_time: >-
+          {{ ansible_date_time.iso8601
+          | iso8601_to_servicenow_datetime_format }}
+    - name: Show scheduled Change Request start date
+      ansible.builtin.debug:
+        var: change_request_start_date_threshold
+    - name: >-
+        Show playbook execution time, which should be before a scheduled Change
+        Request's end date
+      ansible.builtin.debug:
+        var: playbook_execution_time
+    - name: Fetch recent ServiceNow change requests
+      servicenow.itsm.change_request_info:
+        instance:
+          host: "{{ servicenow_host }}"
+          username: "{{ servicenow_username }}"
+          password: "{{ servicenow_password }}"
+        query:
+          - state: "= scheduled"
+            start_date: ">= {{ change_request_start_date_threshold }}"
+            end_date: ">= {{ playbook_execution_time }}"
+      register: cr_results
+    - ansible.builtin.debug:
+        msg: >-
+          Found {{ cr_results.records | length }} Change Request(s) matching
+          conditions
+    - name: End playbook if no Change Requests exist
+      ansible.builtin.meta: end_play
+      when: cr_results.records | length == 0
+    - name: Show data about scheduled Change Requests to be worked by Ansible
+      ansible.builtin.debug:
+        msg: >-
+          Change Request {{ item.number }} opened at {{ item.opened_at }}
+          with scheduled start date of {{ item.start_date }} and scheduled
+          end date of {{ item.end_date }}
+      with_items: "{{ cr_results.records }}"
+      loop_control:
+        label: "{{ item.number }}"
+    - name: Assign Change Request to Ansible and update notes
+      servicenow.itsm.change_request:
+        instance:
+          host: "{{ servicenow_host }}"
+          username: "{{ servicenow_username }}"
+          password: "{{ servicenow_password }}"
+        number: "{{ cr_results.records[0].number }}"
+        state: "implement"
+        assignment_group: "Network"
+        other:
+          assigned_to: "ansible"
+          work_notes: >-
+            Implementing OSPF configuration change based on information in
+            Change Request.
