@@ -1,6 +1,6 @@
 -r requirements.txt
 black
 flake8
-ansible-lint
+ansible-lint==5.3.2
 pre-commit
 virl2_client
