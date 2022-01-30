@@ -34,4 +34,4 @@ repos:
     hooks:
       - id: ansible-lint
         always_run: false
-        files: playbooks/
+        files: playbooks/.*/\.(yaml|yml)$

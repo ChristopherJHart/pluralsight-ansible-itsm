@@ -7,7 +7,6 @@
       cisco.ios.ios_config:
         lines:
           - no network 192.168.4.0 0.0.0.255 area 0
-          - no passive-interface GigabitEthernet4
         parents: router ospf 1
     - ansible.builtin.pause:
         prompt: "Press 'Enter' to continue with playbook"
