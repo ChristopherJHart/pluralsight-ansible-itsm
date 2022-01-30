@@ -42,7 +42,7 @@ $ ansible-galaxy collection install -r collections/requirements.yaml
 $ pip install -r requirements-dev.txt
 ```
 
-7. (Optional) If you are interested in using Ansible playbooks to deploy a network topology to a Cisco Modeling Labs instance that can be used to test automation, install this project's development-related Ansible collection dependencies using `ansible-galaxy`:
+7. (Optional) If you are interested in using Ansible playbooks to deploy a network topology to a Cisco Modeling Labs (CML) instance that can be used to test automation, install this project's development-related Ansible collection dependencies using `ansible-galaxy`:
 
 ```shell
 $ ansible-galaxy collection install -r collections/requirements-dev.yaml
