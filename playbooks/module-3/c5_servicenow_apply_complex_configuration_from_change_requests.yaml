@@ -8,8 +8,6 @@
         lines:
           - no network 192.168.4.0 0.0.0.255 area 0
         parents: router ospf 1
-    - ansible.builtin.pause:
-        prompt: "Press 'Enter' to continue with playbook"
 - name: Create and schedule ServiceNow change request to implement OSPF changes
   hosts: localhost
   gather_facts: true
@@ -67,6 +65,8 @@
           in Boston. Scheduled start date is
           {{ created_cr_results.record.start_date }} and scheduled end date is
           {{ created_cr_results.record.end_date }}.
+    - ansible.builtin.pause:
+        prompt: "Press 'Enter' to continue with playbook"
 - name: Fetch ServiceNow change requests created
   hosts: localhost
   gather_facts: true
@@ -148,12 +148,16 @@
             lines: >-
               {{ hostvars['localhost']['created_cr_results']['record']
               ['implementation_plan'] }}
+        - ansible.builtin.pause:
+            prompt: "Press 'Enter' to continue with playbook"
         - name: Invoke test plan on relevant router
           cisco.ios.ios_command:
             commands: >-
               {{ hostvars['localhost']['created_cr_results']['record']
               ['test_plan'] }}
           register: test_output
+        - ansible.builtin.pause:
+            prompt: "Press 'Enter' to continue with playbook"
         - name: Update Change Request with test plan results
           servicenow.itsm.change_request:
             instance:
@@ -169,6 +173,8 @@
 
 
                 {{ test_output.stdout[0] }}
+        - ansible.builtin.pause:
+            prompt: "Press 'Enter' to continue with playbook"
         - name: Move Change Request to Review if test plan has output
           servicenow.itsm.change_request:
             instance:
@@ -184,6 +190,8 @@
               work_notes: >-
                 Configuration applied to {{ inventory_hostname }} successfully.
           when: test_output.stdout[0]
+        - ansible.builtin.pause:
+            prompt: "Press 'Enter' to continue with playbook"
         - name: >-
             Roll back configuration changes and update Change Request if test
             plan does not have output
