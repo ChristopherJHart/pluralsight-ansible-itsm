@@ -66,7 +66,7 @@
       ansible.builtin.set_fact:
         change_request_start_date_threshold: >-
           {{ ansible_date_time.iso8601
-          | modify_time(modifier='subtract', seconds=30) }}
+          | modify_time(modifier='subtract', minutes=1) }}
     - name: >-
         Define playbook execution time, which should be before a scheduled
         Change Request's end date
@@ -129,20 +129,26 @@
         sys_class_name: "cmdb_ci_ip_network"
         sys_id: "{{ cr_results.records[0].cmdb_ci }}"
       register: ci_ip_network_results
-    - ansible.builtin.debug:
+    - name: Show IP Network CMDB Configuration Item from ServiceNow
+      ansible.builtin.debug:
         var: ci_ip_network_results
     - ansible.builtin.pause:
         prompt: "Press 'Enter' to continue with playbook"
-    - ansible.builtin.set_fact:
+    - name: >-
+        Define network address and wildcard mask of OSPF network to configure
+        using filters
+      ansible.builtin.set_fact:
         network_address: >-
           {{ ci_ip_network_results.records[0].subnet
           | ansible.netcommon.ipaddr('network') }}
         wildcard_mask: >-
           {{ ci_ip_network_results.records[0].subnet
           | ansible.netcommon.ipaddr('hostmask') }}
-    - ansible.builtin.debug:
+    - name: Show network address of OSPF network to configure
+      ansible.builtin.debug:
         var: network_address
-    - ansible.builtin.debug:
+    - name: Show wildcard mask of OSPF network to configure
+      ansible.builtin.debug:
         var: wildcard_mask
     - ansible.builtin.pause:
         prompt: "Press 'Enter' to continue with playbook"
@@ -155,13 +161,16 @@
         sys_class_name: "cmdb_ci_ip_router"
         sys_id: "{{ ci_ip_network_results.records[0].router }}"
       register: ci_router_results
-    - ansible.builtin.debug:
+    - name: Show IP Router CMDB Configuration Item from ServiceNow
+      ansible.builtin.debug:
         var: ci_router_results
     - ansible.builtin.pause:
         prompt: "Press 'Enter' to continue with playbook"
-    - ansible.builtin.set_fact:
+    - name: Define FQDN/IP address of OSPF router associated with OSPF network
+      ansible.builtin.set_fact:
         router_to_configure: "{{ ci_router_results.records[0].ip_address }}"
-    - ansible.builtin.debug:
+    - name: Show FQDN/IP address of OSPF router associated with OSPF network
+      ansible.builtin.debug:
         var: router_to_configure
     - ansible.builtin.pause:
         prompt: "Press 'Enter' to continue with playbook"

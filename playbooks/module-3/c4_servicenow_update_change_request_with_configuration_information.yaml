@@ -7,8 +7,6 @@
       cisco.ios.ios_config:
         lines: no network 192.168.4.0 0.0.0.255 area 0
         parents: router ospf 1
-    - ansible.builtin.pause:
-        prompt: "Press 'Enter' to continue with playbook"
 - name: Create and schedule ServiceNow change request to implement OSPF changes
   hosts: localhost
   gather_facts: true
@@ -66,7 +64,7 @@
       ansible.builtin.set_fact:
         change_request_start_date_threshold: >-
           {{ ansible_date_time.iso8601
-          | modify_time(modifier='subtract', seconds=30) }}
+          | modify_time(modifier='subtract', minutes=1) }}
     - name: >-
         Define playbook execution time, which should be before a scheduled
         Change Request's end date
@@ -115,8 +113,6 @@
           work_notes: >-
             Implementing OSPF configuration change based on information in
             Change Request.
-    - ansible.builtin.pause:
-        prompt: "Press 'Enter' to continue with playbook"
     - name: Fetch Configuration Item for IP Network
       servicenow.itsm.configuration_item_info:
         instance:
@@ -126,17 +122,16 @@
         sys_class_name: "cmdb_ci_ip_network"
         sys_id: "{{ cr_results.records[0].cmdb_ci }}"
       register: ci_ip_network_results
-    - ansible.builtin.pause:
-        prompt: "Press 'Enter' to continue with playbook"
-    - ansible.builtin.set_fact:
+    - name: >-
+        Define network address and wildcard mask of OSPF network to configure
+        using filters
+      ansible.builtin.set_fact:
         network_address: >-
           {{ ci_ip_network_results.records[0].subnet
           | ansible.netcommon.ipaddr('network') }}
         wildcard_mask: >-
           {{ ci_ip_network_results.records[0].subnet
           | ansible.netcommon.ipaddr('hostmask') }}
-    - ansible.builtin.pause:
-        prompt: "Press 'Enter' to continue with playbook"
     - name: Fetch Configuration item for Router
       servicenow.itsm.configuration_item_info:
         instance:
@@ -146,12 +141,9 @@
         sys_class_name: "cmdb_ci_ip_router"
         sys_id: "{{ ci_ip_network_results.records[0].router }}"
       register: ci_router_results
-    - ansible.builtin.pause:
-        prompt: "Press 'Enter' to continue with playbook"
-    - ansible.builtin.set_fact:
+    - name: Define FQDN/IP address of OSPF router associated with OSPF network
+      ansible.builtin.set_fact:
         router_to_configure: "{{ ci_router_results.records[0].ip_address }}"
-    - ansible.builtin.pause:
-        prompt: "Press 'Enter' to continue with playbook"
 - name: Apply OSPF host-facing configuration to relevant router
   hosts: routers
   gather_facts: false
@@ -243,6 +235,12 @@
                                 {{ hostvars['localhost']['wildcard_mask'] }}
                               area: "0"
                     state: deleted
+                - name: >-
+                    Get current OSPF configuration from
+                    {{ hostvars['localhost']['router_to_configure'] }}
+                  cisco.ios.ios_command:
+                    commands: "show running-config | section router ospf"
+                  register: ospf_configuration_after_rollback
                 - name: Update Change Request with relevant information
                   servicenow.itsm.change_request:
                     instance:
@@ -271,10 +269,17 @@
                         Further investigation is needed to troubleshoot this
                         issue.
 
-                        OSPF changes have been rolled back:
+
+                        OSPF configuration during this broken state:
 
 
                         {{ ospf_configuration_after_configuration.stdout[0] }}
+
+
+                        This OSPF configuration has been rolled back:
+
+
+                        {{ ospf_configuration_after_rollback.stdout[0] }}
               when: >-
                 hostvars['localhost']['network_address']
                 not in routing_output_after_configuration.stdout[0]
@@ -294,8 +299,8 @@
             assignment_group: "Network"
             other:
               work_notes: >-
-                We failed to validate this OSPF change. The Router LSA already
-                exists for network
+                This change failed pre-implementation validation. The Router
+                LSA already exists for network
                 {{ hostvars['localhost']['network_address'] }} that needs to be
                 configured on
                 {{ hostvars['localhost']['router_to_configure'] }}:
