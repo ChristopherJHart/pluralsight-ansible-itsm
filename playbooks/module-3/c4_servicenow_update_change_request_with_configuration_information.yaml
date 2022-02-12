@@ -47,7 +47,7 @@
             | iso8601_to_servicenow_datetime_format }}
           end_date: >-
             {{ ansible_date_time.iso8601
-            | modify_time(modifier='add', hours=1) }}
+            | modify_time_sn(modifier='add', hours=1) }}
       register: created_cr_results
     - ansible.builtin.debug:
         msg: >-
@@ -64,7 +64,7 @@
       ansible.builtin.set_fact:
         change_request_start_date_threshold: >-
           {{ ansible_date_time.iso8601
-          | modify_time(modifier='subtract', minutes=1) }}
+          | modify_time_sn(modifier='subtract', minutes=1) }}
     - name: >-
         Define playbook execution time, which should be before a scheduled
         Change Request's end date
@@ -217,8 +217,6 @@
               when: >-
                 hostvars['localhost']['network_address']
                 in routing_output_after_configuration.stdout[0]
-            - ansible.builtin.pause:
-                prompt: "Press 'Enter' to continue with playbook"
             - name: >-
                 Roll back changes and update Change Request with information if
                 change is unsuccessful

@@ -56,7 +56,7 @@
             | iso8601_to_servicenow_datetime_format }}
           end_date: >-
             {{ ansible_date_time.iso8601
-            | modify_time(modifier='add', hours=1) }}
+            | modify_time_sn(modifier='add', hours=1) }}
       register: created_cr_results
     - ansible.builtin.debug:
         msg: >-
@@ -75,7 +75,7 @@
       ansible.builtin.set_fact:
         change_request_start_date_threshold: >-
           {{ ansible_date_time.iso8601
-          | modify_time(modifier='subtract', seconds=30) }}
+          | modify_time_sn(modifier='subtract', seconds=30) }}
     - name: >-
         Define playbook execution time, which should be before a scheduled
         Change Request's end date
