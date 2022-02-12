@@ -7,7 +7,7 @@ cml_lab_filename: "Pluralsight ITSM Course.yaml"
 cml_lab_filepath: "../files/{{ cml_lab_filename }}"
 
 # ServiceNow-related variables
-servicenow_host: "https://dev95644.service-now.com"
+servicenow_host: "https://dev90380.service-now.com"
 servicenow_username: "ansible"
 servicenow_password: "Password!123"
 
