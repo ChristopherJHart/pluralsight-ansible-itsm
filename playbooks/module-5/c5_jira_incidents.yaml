@@ -1,0 +1,75 @@
+---
+- name: Create, update, and close a Jira incident
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Create Jira incident
+      community.general.jira:
+        uri: "{{ jira_uri }}"
+        username: "{{ jira_username }}"
+        password: "{{ jira_password }}"
+        project: "GLOB"
+        operation: "create"
+        summary: "Example Incident"
+        description: >
+          Incident automatically opened by Ansible demonstrating how Ansible
+          can open a new incident.
+        issuetype: "[System] Incident"
+        fields:
+          labels:
+            - ansible
+      register: results
+    - name: "Display Jira issue key"
+      ansible.builtin.debug:
+        var: results.meta.key
+    - ansible.builtin.pause:
+        prompt: "Press 'Enter' to continue with playbook"
+    - name: >-
+        Assign Jira incident to user account, move to Work In Progress status
+      community.general.jira:
+        uri: "{{ jira_uri }}"
+        username: "{{ jira_username }}"
+        password: "{{ jira_password }}"
+        issue: "{{ results.meta.key }}"
+        operation: "transition"
+        status: "Investigate"
+        account_id: "70121:2dbae1f5-6dca-4b0f-bc3d-353c20e542d2"
+        comment: "Attempting to automatically identify root cause of issue."
+    - ansible.builtin.pause:
+        prompt: "Press 'Enter' to continue with playbook"
+    - name: "Add comment to incident"
+      community.general.jira:
+        uri: "{{ jira_uri }}"
+        username: "{{ jira_username }}"
+        password: "{{ jira_password }}"
+        issue: "{{ results.meta.key }}"
+        operation: "comment"
+        comment: "Suspecting that missing configuration on device is the issue"
+    - ansible.builtin.pause:
+        prompt: "Press 'Enter' to continue with playbook"
+    - name: "Complete/Resolve Jira incident"
+      community.general.jira:
+        uri: "{{ jira_uri }}"
+        username: "{{ jira_username }}"
+        password: "{{ jira_password }}"
+        issue: "{{ results.meta.key }}"
+        operation: "transition"
+        status: "Resolve"
+        comment: >-
+          Found that device configuration was partially applied, some
+          configuration was missing.
+
+          Resolved issue by applying missing configuration to device.
+        fields:
+          resolution:
+            name: "Done"
+    - ansible.builtin.pause:
+        prompt: "Press 'Enter' to continue with playbook"
+    - name: "Close Jira incident"
+      community.general.jira:
+        uri: "{{ jira_uri }}"
+        username: "{{ jira_username }}"
+        password: "{{ jira_password }}"
+        issue: "{{ results.meta.key }}"
+        operation: "transition"
+        status: "Close"
