@@ -173,6 +173,9 @@
     - name: "Show FQDN/IP address of OSPF router associated with OSPF network"
       ansible.builtin.debug:
         var: router_to_configure
+    - name: "Define ServiceNow Change Request record number"
+      ansible.builtin.set_fact:
+        change_request_record: "{{ cr_results.records[0].number }}"
     - ansible.builtin.pause:
         prompt: "Press 'Enter' to continue with playbook"
 - name: "Apply OSPF host-facing configuration to relevant router"

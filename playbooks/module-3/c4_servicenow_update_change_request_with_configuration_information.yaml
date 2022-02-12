@@ -145,6 +145,9 @@
     - name: "Define FQDN/IP address of OSPF router associated with OSPF network"
       ansible.builtin.set_fact:
         router_to_configure: "{{ ci_router_results.records[0].ip_address }}"
+    - name: "Define ServiceNow Change Request record number"
+      ansible.builtin.set_fact:
+        change_request_record: "{{ cr_results.records[0].number }}"
 - name: "Apply OSPF host-facing configuration to relevant router"
   hosts: routers
   gather_facts: false
@@ -195,9 +198,7 @@
                   host: "{{ servicenow_host }}"
                   username: "{{ servicenow_username }}"
                   password: "{{ servicenow_password }}"
-                number: >-
-                  {{ hostvars['localhost']['created_cr_results']['record']
-                  ['number'] }}
+                number: "{{ hostvars['localhost']['change_request_record'] }}"
                 state: "review"
                 assignment_group: "Network"
                 other:
@@ -247,8 +248,7 @@
                       username: "{{ servicenow_username }}"
                       password: "{{ servicenow_password }}"
                     number: >-
-                      {{ hostvars['localhost']['created_cr_results']['record']
-                      ['number'] }}
+                      {{ hostvars['localhost']['change_request_record'] }}
                     state: "review"
                     assignment_group: "Network"
                     other:
@@ -291,9 +291,7 @@
               host: "{{ servicenow_host }}"
               username: "{{ servicenow_username }}"
               password: "{{ servicenow_password }}"
-            number: >-
-              {{ hostvars['localhost']['created_cr_results']['record']
-              ['number'] }}
+            number: "{{ hostvars['localhost']['change_request_record'] }}"
             state: "review"
             assignment_group: "Network"
             other:

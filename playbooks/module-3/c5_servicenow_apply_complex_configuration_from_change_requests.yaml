@@ -134,8 +134,15 @@
         sys_class_name: "cmdb_ci_ip_router"
         sys_id: "{{ cr_results.records[0].cmdb_ci }}"
       register: ci_router_results
-    - ansible.builtin.set_fact:
+    - name: >-
+        Define router to configure, Change Request key, and
+        implementation/backout/test plans
+      ansible.builtin.set_fact:
         router_to_configure: "{{ ci_router_results.records[0].ip_address }}"
+        change_request_record: "{{ cr_results.records[0].number }}"
+        implementation_plan: "{{ cr_results.records[0].implementation_plan }}"
+        backout_plan: "{{ cr_results.records[0].backout_plan }}"
+        test_plan: "{{ cr_results.records[0].test_plan }}"
 - name: "Apply configuration to relevant router"
   hosts: routers
   gather_facts: false
@@ -146,16 +153,12 @@
       block:
         - name: "Apply configuration to relevant router"
           cisco.ios.ios_config:
-            lines: >-
-              {{ hostvars['localhost']['created_cr_results']['record']
-              ['implementation_plan'] }}
+            lines: "{{ hostvars['localhost']['implementation_plan'] }}"
         - ansible.builtin.pause:
             prompt: "Press 'Enter' to continue with playbook"
         - name: "Invoke test plan on relevant router"
           cisco.ios.ios_command:
-            commands: >-
-              {{ hostvars['localhost']['created_cr_results']['record']
-              ['test_plan'] }}
+            commands: "{{ hostvars['localhost']['test_plan'] }}"
           register: test_output
         - ansible.builtin.pause:
             prompt: "Press 'Enter' to continue with playbook"
@@ -165,9 +168,7 @@
               host: "{{ servicenow_host }}"
               username: "{{ servicenow_username }}"
               password: "{{ servicenow_password }}"
-            number: >-
-              {{ hostvars['localhost']['created_cr_results']['record']
-              ['number'] }}
+            number: "{{ hostvars['localhost']['change_request_record'] }}"
             other:
               work_notes: >-
                 Test plan output from {{ inventory_hostname }}:
@@ -182,9 +183,7 @@
               host: "{{ servicenow_host }}"
               username: "{{ servicenow_username }}"
               password: "{{ servicenow_password }}"
-            number: >-
-              {{ hostvars['localhost']['created_cr_results']['record']
-              ['number'] }}
+            number: "{{ hostvars['localhost']['change_request_record'] }}"
             state: "review"
             assignment_group: "Network"
             other:
@@ -199,18 +198,14 @@
           block:
             - name: "Roll back configuration changes"
               cisco.ios.ios_config:
-                lines: >-
-                  {{ hostvars['localhost']['created_cr_results']['record']
-                  ['backout_plan'] }}
+                lines: "{{ hostvars['localhost']['backout_plan'] }}"
             - name: "Update Change Request accordingly"
               servicenow.itsm.change_request:
                 instance:
                   host: "{{ servicenow_host }}"
                   username: "{{ servicenow_username }}"
                   password: "{{ servicenow_password }}"
-                number: >-
-                  {{ hostvars['localhost']['created_cr_results']['record']
-                  ['number'] }}
+                number: "{{ hostvars['localhost']['change_request_record'] }}"
                 state: "review"
                 assignment_group: "Network"
                 other:
