@@ -1,0 +1,141 @@
+---
+- name: Create and schedule Jira change request to implement OSPF changes
+  hosts: localhost
+  gather_facts: true
+  tasks:
+    - name: Create Jira change request to implement OSPF changes
+      community.general.jira:
+        uri: "{{ jira_uri }}"
+        username: "{{ jira_username }}"
+        password: "{{ jira_password }}"
+        project: "GLOB"
+        operation: "create"
+        summary: >-
+          Activate OSPF on Boston's host-facing GigabitEthernet4 interface
+        description: >
+          To finish provisioning our new Boston branch office, we need to
+          activate OSPF on the Boston router's host-facing GigabitEthernet4
+          interface using Ansible.
+        issuetype: "Provision new network"
+        fields:
+          customfield_10058: "192.168.4.0/24"
+          customfield_10059: "boston.chrisjhart.net"
+          labels:
+            - ansible
+      register: cr_results
+    - name: Show playbook execution date
+      ansible.builtin.debug:
+        var: ansible_date_time.iso8601
+    - ansible.builtin.pause:
+        prompt: "Press 'Enter' to continue with playbook"
+    - name: "Modify change request status to Awaiting Implementation"
+      community.general.jira:
+        uri: "{{ jira_uri }}"
+        username: "{{ jira_username }}"
+        password: "{{ jira_password }}"
+        issue: "{{ cr_results.meta.key }}"
+        operation: "transition"
+        status: "Standard change"
+    - name: "Schedule change request"
+      community.general.jira:
+        uri: "{{ jira_uri }}"
+        username: "{{ jira_username }}"
+        password: "{{ jira_password }}"
+        issue: "{{ cr_results.meta.key }}"
+        operation: "edit"
+        comment: "Scheduling change request."
+        fields:
+          customfield_10044: >-
+            {{ ansible_date_time.iso8601 }}
+          customfield_10045: >-
+            {{ ansible_date_time.iso8601
+            | modify_time_jira(modifier='add', hours=1) }}
+    - name: "Fetch change request details"
+      community.general.jira:
+        uri: "{{ jira_uri }}"
+        username: "{{ jira_username }}"
+        password: "{{ jira_password }}"
+        issue: "{{ cr_results.meta.key }}"
+        operation: "fetch"
+      register: final_cr_results
+    - ansible.builtin.debug:
+        msg: >-
+          Created and scheduled {{ final_cr_results.meta.key }} at
+          {{ final_cr_results.meta.fields.created }} to implement OSPF changes
+          in Boston. Scheduled start date is
+          {{ final_cr_results.meta.fields.customfield_10044 }} and scheduled
+          end date is
+          {{ final_cr_results.meta.fields.customfield_10045 }}.
+    - ansible.builtin.pause:
+        prompt: "Press 'Enter' to continue with playbook"
+- name: Fetch Jira change requests created
+  hosts: localhost
+  gather_facts: true
+  tasks:
+    - name: >-
+        Define playbook execution time, which should be before a scheduled
+        Change Request's end date
+      ansible.builtin.set_fact:
+        playbook_execution_time: >-
+          {{ ansible_date_time.iso8601
+          | iso8601_to_jira_datetime_format(subtract_offset_hours=5) }}
+    - name: >-
+        Show playbook execution time, which should be before a scheduled Change
+        Request's end date
+      ansible.builtin.debug:
+        var: playbook_execution_time
+    - ansible.builtin.pause:
+        prompt: "Press 'Enter' to continue with playbook"
+    - name: "Fetch recent Jira change requests"
+      community.general.jira:
+        uri: "{{ jira_uri }}"
+        username: "{{ jira_username }}"
+        password: "{{ jira_password }}"
+        project: "GLOB"
+        operation: "search"
+        jql: >-
+          project=GLOB
+          AND status="Awaiting Implementation"
+          AND cf[10044]>=-1m
+          AND cf[10045]>="{{ playbook_execution_time }}"
+      register: cr_results
+    - ansible.builtin.debug:
+        msg: >-
+          Found {{ cr_results.meta.issues | length }} Change Request(s)
+          matching conditions
+    - ansible.builtin.pause:
+        prompt: "Press 'Enter' to continue with playbook"
+    - name: "End playbook if no Change Requests exist"
+      ansible.builtin.meta: end_play
+      when: cr_results.meta.issues | length == 0
+    - name: Show data about scheduled Change Requests to be worked by Ansible
+      ansible.builtin.debug:
+        msg: >-
+          Change Request {{ item.key }} opened at {{ item.fields.created }}
+          with scheduled start date of {{ item.fields.customfield_10044 }} and
+          scheduled end date of {{ item.fields.customfield_10045 }}
+      with_items: "{{ cr_results.meta.issues }}"
+      loop_control:
+        label: "{{ item.key }}"
+    - ansible.builtin.pause:
+        prompt: "Press 'Enter' to continue with playbook"
+    - name: "Assign Change Request to Ansible"
+      community.general.jira:
+        uri: "{{ jira_uri }}"
+        username: "{{ jira_username }}"
+        password: "{{ jira_password }}"
+        issue: "{{ cr_results.meta.issues[0].key }}"
+        operation: "edit"
+        account_id: "70121:2dbae1f5-6dca-4b0f-bc3d-353c20e542d2"
+    - name: "Modify Change Request status to Implementing"
+      community.general.jira:
+        uri: "{{ jira_uri }}"
+        username: "{{ jira_username }}"
+        password: "{{ jira_password }}"
+        issue: "{{ cr_results.meta.issues[0].key }}"
+        operation: "transition"
+        status: "Implement"
+        comment: >-
+          Implementing change request - advertising network
+          {{ cr_results.meta.issues[0].fields.customfield_10058 }} into OSPF on
+          router {{ cr_results.meta.issues[0].fields.customfield_10059 }}.

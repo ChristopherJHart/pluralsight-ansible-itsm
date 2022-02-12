@@ -1,0 +1,308 @@
+---
+- name: Remove OSPF network from Boston
+  hosts: boston.chrisjhart.net
+  gather_facts: false
+  tasks:
+    - name: Remove OSPF network from Boston
+      cisco.ios.ios_config:
+        lines: no network 192.168.4.0 0.0.0.255 area 0
+        parents: router ospf 1
+- name: Create and schedule Jira change request to implement OSPF changes
+  hosts: localhost
+  gather_facts: true
+  tasks:
+    - name: Create Jira change request to implement OSPF changes
+      community.general.jira:
+        uri: "{{ jira_uri }}"
+        username: "{{ jira_username }}"
+        password: "{{ jira_password }}"
+        project: "GLOB"
+        operation: "create"
+        summary: >-
+          Activate OSPF on Boston's host-facing GigabitEthernet4 interface
+        description: >
+          To finish provisioning our new Boston branch office, we need to
+          activate OSPF on the Boston router's host-facing GigabitEthernet4
+          interface using Ansible.
+        issuetype: "Provision new network"
+        fields:
+          customfield_10058: "192.168.4.0/24"
+          customfield_10059: "boston.chrisjhart.net"
+          labels:
+            - ansible
+      register: cr_results
+    - name: "Modify change request status to Awaiting Implementation"
+      community.general.jira:
+        uri: "{{ jira_uri }}"
+        username: "{{ jira_username }}"
+        password: "{{ jira_password }}"
+        issue: "{{ cr_results.meta.key }}"
+        operation: "transition"
+        status: "Standard change"
+    - name: "Schedule change request"
+      community.general.jira:
+        uri: "{{ jira_uri }}"
+        username: "{{ jira_username }}"
+        password: "{{ jira_password }}"
+        issue: "{{ cr_results.meta.key }}"
+        operation: "edit"
+        comment: "Scheduling change request."
+        fields:
+          customfield_10044: >-
+            {{ ansible_date_time.iso8601 }}
+          customfield_10045: >-
+            {{ ansible_date_time.iso8601
+            | modify_time_jira(modifier='add', hours=1) }}
+    - name: "Fetch change request details"
+      community.general.jira:
+        uri: "{{ jira_uri }}"
+        username: "{{ jira_username }}"
+        password: "{{ jira_password }}"
+        issue: "{{ cr_results.meta.key }}"
+        operation: "fetch"
+      register: final_cr_results
+    - ansible.builtin.debug:
+        msg: >-
+          Created and scheduled {{ final_cr_results.meta.key }} at
+          {{ final_cr_results.meta.fields.created }} to implement OSPF changes
+          in Boston. Scheduled start date is
+          {{ final_cr_results.meta.fields.customfield_10044 }} and scheduled
+          end date is
+          {{ final_cr_results.meta.fields.customfield_10045 }}.
+- name: Fetch Jira change requests created
+  hosts: localhost
+  gather_facts: true
+  tasks:
+    - name: >-
+        Define playbook execution time, which should be before a scheduled
+        Change Request's end date
+      ansible.builtin.set_fact:
+        playbook_execution_time: >-
+          {{ ansible_date_time.iso8601
+          | iso8601_to_jira_datetime_format(subtract_offset_hours=5) }}
+    - ansible.builtin.debug:
+        var: playbook_execution_time
+    - name: "Fetch recent Jira change requests"
+      community.general.jira:
+        uri: "{{ jira_uri }}"
+        username: "{{ jira_username }}"
+        password: "{{ jira_password }}"
+        project: "GLOB"
+        operation: "search"
+        jql: >-
+          project=GLOB
+          AND status="Awaiting Implementation"
+          AND cf[10044]>=-1m
+          AND cf[10045]>="{{ playbook_execution_time }}"
+      register: cr_results
+    - ansible.builtin.debug:
+        msg: >-
+          Found {{ cr_results.meta.issues | length }} Change Request(s)
+          matching conditions
+    - name: "End playbook if no Change Requests exist"
+      ansible.builtin.meta: end_play
+      when: cr_results.meta.issues | length == 0
+    - name: Show data about scheduled Change Requests to be worked by Ansible
+      ansible.builtin.debug:
+        msg: >-
+          Change Request {{ item.key }} opened at {{ item.fields.created }}
+          with scheduled start date of {{ item.fields.customfield_10044 }} and
+          scheduled end date of {{ item.fields.customfield_10045 }}
+      with_items: "{{ cr_results.meta.issues }}"
+      loop_control:
+        label: "{{ item.key }}"
+    - name: "Assign Change Request to Ansible"
+      community.general.jira:
+        uri: "{{ jira_uri }}"
+        username: "{{ jira_username }}"
+        password: "{{ jira_password }}"
+        issue: "{{ cr_results.meta.issues[0].key }}"
+        operation: "edit"
+        account_id: "70121:2dbae1f5-6dca-4b0f-bc3d-353c20e542d2"
+    - name: "Modify Change Request status to Implementing"
+      community.general.jira:
+        uri: "{{ jira_uri }}"
+        username: "{{ jira_username }}"
+        password: "{{ jira_password }}"
+        issue: "{{ cr_results.meta.issues[0].key }}"
+        operation: "transition"
+        status: "Implement"
+        comment: >-
+          Implementing change request - advertising network
+          {{ cr_results.meta.issues[0].fields.customfield_10058 }} into OSPF on
+          router {{ cr_results.meta.issues[0].fields.customfield_10059 }}.
+    - name: >-
+        Define network address and wildcard mask of OSPF network to configure
+        using filters
+      ansible.builtin.set_fact:
+        network_address: >-
+          {{ cr_results.meta.issues[0].fields.customfield_10058
+          | ansible.netcommon.ipaddr('network') }}
+        wildcard_mask: >-
+          {{ cr_results.meta.issues[0].fields.customfield_10058
+          | ansible.netcommon.ipaddr('hostmask') }}
+        router_to_configure: >-
+          {{ cr_results.meta.issues[0].fields.customfield_10059 }}
+        change_request_key: "{{ cr_results.meta.issues[0].key }}"
+- name: Apply OSPF host-facing configuration to relevant router
+  hosts: routers
+  gather_facts: false
+  tasks:
+    - name: >-
+        Validate OSPF network within Change Request does not already exist,
+        then apply OSPF network configuration to
+        {{ hostvars['localhost']['router_to_configure'] }}
+      block:
+        - name: >-
+            Get Router LSAs from OSPF Link State Database from
+            {{ hostvars['localhost']['router_to_configure'] }}
+          cisco.ios.ios_command:
+            commands: "show ip ospf database router"
+          register: routing_output_before_configuration
+        - name: >-
+            LSA is not present prior to configuration. Configure OSPF network
+            on {{ hostvars['localhost']['router_to_configure'] }} and validate
+          block:
+            - name: Configure OSPF network on device
+              cisco.ios.ios_ospfv2:
+                config:
+                  processes:
+                    - process_id: 1
+                      network:
+                        - address: >-
+                            {{ hostvars['localhost']['network_address'] }}
+                          wildcard_bits: >-
+                            {{ hostvars['localhost']['wildcard_mask'] }}
+                          area: "0"
+                state: merged
+            - name: >-
+                Get Router LSAs from OSPF Link State Database from
+                {{ hostvars['localhost']['router_to_configure'] }}
+              cisco.ios.ios_command:
+                commands: "show ip ospf database router"
+              register: routing_output_after_configuration
+            - name: >-
+                Get current OSPF configuration from
+                {{ hostvars['localhost']['router_to_configure'] }}
+              cisco.ios.ios_command:
+                commands: "show running-config | section router ospf"
+              register: ospf_configuration_after_configuration
+            - name: >-
+                Update Change Request with information if change is successful
+              community.general.jira:
+                uri: "{{ jira_uri }}"
+                username: "{{ jira_username }}"
+                password: "{{ jira_password }}"
+                issue: "{{ hostvars['localhost']['change_request_key'] }}"
+                operation: "transition"
+                status: "Complete"
+                comment: >-
+                  Successfully configured OSPF network
+                  {{ hostvars['localhost']['network_address'] }} on
+                  {{ hostvars['localhost']['router_to_configure'] }}.
+                  Relevant LSA is present in the OSPF Link State Database.
+
+
+                  {{ routing_output_after_configuration.stdout[0] }}
+
+
+                  Current OSPF configuration:
+
+
+                  {{ ospf_configuration_after_configuration.stdout[0] }}
+              when: >-
+                hostvars['localhost']['network_address']
+                in routing_output_after_configuration.stdout[0]
+            - name: >-
+                Roll back changes and update Change Request with information if
+                change is unsuccessful
+              block:
+                - name: Roll back OSPF configuration changes
+                  cisco.ios.ios_ospfv2:
+                    config:
+                      processes:
+                        - process_id: 1
+                          network:
+                            - address: >-
+                                {{ hostvars['localhost']['network_address'] }}
+                              wildcard_bits: >-
+                                {{ hostvars['localhost']['wildcard_mask'] }}
+                              area: "0"
+                    state: deleted
+                - name: >-
+                    Get current OSPF configuration from
+                    {{ hostvars['localhost']['router_to_configure'] }}
+                  cisco.ios.ios_command:
+                    commands: "show running-config | section router ospf"
+                  register: ospf_configuration_after_rollback
+                - name: Update Change Request with relevant information
+                  community.general.jira:
+                    uri: "{{ jira_uri }}"
+                    username: "{{ jira_username }}"
+                    password: "{{ jira_password }}"
+                    issue: "{{ hostvars['localhost']['change_request_key'] }}"
+                    operation: "transition"
+                    status: "Complete"
+                    comment: >-
+                      After configuring OSPF network
+                      {{ hostvars['localhost']['network_address'] }} on
+                      {{ hostvars['localhost']['router_to_configure'] }}, the
+                      Router LSA for this network was not present in the OSPF
+                      Link State Database.
+
+
+                      {{ routing_output_after_configuration.stdout[0] }}
+
+
+                      This may indicate an issue with the interface owning
+                      this network. For example, the interface may be down.
+                      Further investigation is needed to troubleshoot this
+                      issue.
+
+
+                      OSPF configuration during this broken state:
+
+
+                      {{ ospf_configuration_after_configuration.stdout[0] }}
+
+
+                      This OSPF configuration has been rolled back:
+
+
+                      {{ ospf_configuration_after_rollback.stdout[0] }}
+              when: >-
+                hostvars['localhost']['network_address']
+                not in routing_output_after_configuration.stdout[0]
+          when: >-
+            hostvars['localhost']['network_address']
+            not in routing_output_before_configuration.stdout[0]
+        - name: Update Change Request if change does not seem valid
+          community.general.jira:
+            uri: "{{ jira_uri }}"
+            username: "{{ jira_username }}"
+            password: "{{ jira_password }}"
+            issue: "{{ hostvars['localhost']['change_request_key'] }}"
+            operation: "transition"
+            status: "Complete"
+            comment: >-
+              This change failed pre-implementation validation. The Router
+              LSA already exists for network
+              {{ hostvars['localhost']['network_address'] }} that needs to be
+              configured on
+              {{ hostvars['localhost']['router_to_configure'] }}:
+
+
+              {{ routing_output_before_configuration.stdout[0] }}
+
+
+              This indicates that the network is already configured and being
+              advertised elsewhere in the network. Further investigation is
+              needed to validate where this LSA is being originated from.
+          when: >-
+            hostvars['localhost']['network_address']
+            in routing_output_before_configuration.stdout[0]
+      when: >-
+        hostvars["localhost"]["router_to_configure"] is defined
+        and hostvars["localhost"]["network_address"] is defined
+        and hostvars["localhost"]["wildcard_mask"] is defined
+        and hostvars["localhost"]["router_to_configure"] == inventory_hostname
