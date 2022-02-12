@@ -135,7 +135,8 @@
           router {{ cr_results.meta.issues[0].fields.customfield_10059 }}.
     - name: >-
         Define network address and wildcard mask of OSPF network to configure
-        using filters
+        using filters, as well as IP router to configure and Jira Change
+        Request key
       ansible.builtin.set_fact:
         network_address: >-
           {{ cr_results.meta.issues[0].fields.customfield_10058

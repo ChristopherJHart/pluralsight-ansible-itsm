@@ -139,7 +139,9 @@
         comment: >-
           Implementing change request on router
           {{ cr_results.meta.issues[0].fields.customfield_10059 }}.
-    - name: "Define router to configure and Change Request key"
+    - name: >-
+        Define router to configure, Change Request key, and
+        implementation/backout/test plans
       ansible.builtin.set_fact:
         router_to_configure: >-
           {{ cr_results.meta.issues[0].fields.customfield_10059 }}
