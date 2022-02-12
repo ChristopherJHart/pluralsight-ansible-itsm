@@ -1,17 +1,17 @@
 ---
-- name: Remove OSPF network from Boston
+- name: "Remove OSPF network from Boston"
   hosts: boston.chrisjhart.net
   gather_facts: false
   tasks:
-    - name: Remove OSPF network from Boston
+    - name: "Remove OSPF network from Boston"
       cisco.ios.ios_config:
         lines: no network 192.168.4.0 0.0.0.255 area 0
         parents: router ospf 1
-- name: Create and schedule Jira change request to implement OSPF changes
+- name: "Create and schedule Jira change request to implement OSPF changes"
   hosts: localhost
   gather_facts: true
   tasks:
-    - name: Create Jira change request to implement OSPF changes
+    - name: "Create Jira change request to implement OSPF changes"
       community.general.jira:
         uri: "{{ jira_uri }}"
         username: "{{ jira_username }}"
@@ -69,7 +69,7 @@
           {{ final_cr_results.meta.fields.customfield_10044 }} and scheduled
           end date is
           {{ final_cr_results.meta.fields.customfield_10045 }}.
-- name: Fetch Jira change requests created
+- name: "Fetch Jira change requests created"
   hosts: localhost
   gather_facts: true
   tasks:
@@ -102,7 +102,7 @@
     - name: "End playbook if no Change Requests exist"
       ansible.builtin.meta: end_play
       when: cr_results.meta.issues | length == 0
-    - name: Show data about scheduled Change Requests to be worked by Ansible
+    - name: "Show data about scheduled Change Requests to be worked by Ansible"
       ansible.builtin.debug:
         msg: >-
           Change Request {{ item.key }} opened at {{ item.fields.created }}
@@ -144,7 +144,7 @@
         router_to_configure: >-
           {{ cr_results.meta.issues[0].fields.customfield_10059 }}
         change_request_key: "{{ cr_results.meta.issues[0].key }}"
-- name: Apply OSPF host-facing configuration to relevant router
+- name: "Apply OSPF host-facing configuration to relevant router"
   hosts: routers
   gather_facts: false
   tasks:
@@ -163,7 +163,7 @@
             LSA is not present prior to configuration. Configure OSPF network
             on {{ hostvars['localhost']['router_to_configure'] }} and validate
           block:
-            - name: Configure OSPF network on device
+            - name: "Configure OSPF network on device"
               cisco.ios.ios_ospfv2:
                 config:
                   processes:
@@ -217,7 +217,7 @@
                 Roll back changes and update Change Request with information if
                 change is unsuccessful
               block:
-                - name: Roll back OSPF configuration changes
+                - name: "Roll back OSPF configuration changes"
                   cisco.ios.ios_ospfv2:
                     config:
                       processes:
@@ -235,7 +235,7 @@
                   cisco.ios.ios_command:
                     commands: "show running-config | section router ospf"
                   register: ospf_configuration_after_rollback
-                - name: Update Change Request with relevant information
+                - name: "Update Change Request with relevant information"
                   community.general.jira:
                     uri: "{{ jira_uri }}"
                     username: "{{ jira_username }}"
@@ -276,7 +276,7 @@
           when: >-
             hostvars['localhost']['network_address']
             not in routing_output_before_configuration.stdout[0]
-        - name: Update Change Request if change does not seem valid
+        - name: "Update Change Request if change does not seem valid"
           community.general.jira:
             uri: "{{ jira_uri }}"
             username: "{{ jira_username }}"

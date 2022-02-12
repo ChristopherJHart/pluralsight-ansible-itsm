@@ -1,9 +1,9 @@
 ---
-- name: Create, update, and close a Jira incident
+- name: "Create, update, and close a Jira incident"
   hosts: localhost
   gather_facts: false
   tasks:
-    - name: Create Jira incident
+    - name: "Create Jira incident"
       community.general.jira:
         uri: "{{ jira_uri }}"
         username: "{{ jira_username }}"

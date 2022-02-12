@@ -1,9 +1,9 @@
 ---
-- name: Create, update, and close a ServiceNow problem
+- name: "Create, update, and close a ServiceNow problem"
   hosts: localhost
   gather_facts: false
   tasks:
-    - name: Create ServiceNow problem
+    - name: "Create ServiceNow problem"
       servicenow.itsm.problem:
         instance:
           host: "{{ servicenow_host }}"
@@ -29,7 +29,7 @@
         var: results.record.number
     - ansible.builtin.pause:
         prompt: "Press 'Enter' to continue with playbook"
-    - name: Assign ServiceNow problem to Ansible
+    - name: "Assign ServiceNow problem to Ansible"
       servicenow.itsm.problem:
         instance:
           host: "{{ servicenow_host }}"
@@ -39,7 +39,7 @@
         assigned_to: "ansible"
     - ansible.builtin.pause:
         prompt: "Press 'Enter' to continue with playbook"
-    - name: Change status of ServiceNow problem to Assess
+    - name: "Change status of ServiceNow problem to Assess"
       servicenow.itsm.problem:
         instance:
           host: "{{ servicenow_host }}"
@@ -52,7 +52,7 @@
           work_notes: Attempting to confirm issue exists.
     - ansible.builtin.pause:
         prompt: "Press 'Enter' to continue with playbook"
-    - name: Change status of ServiceNow problem to Root Cause Analysis
+    - name: "Change status of ServiceNow problem to Root Cause Analysis"
       servicenow.itsm.problem:
         instance:
           host: "{{ servicenow_host }}"
@@ -65,7 +65,7 @@
           work_notes: Attempting to automatically identify root cause of issue.
     - ansible.builtin.pause:
         prompt: "Press 'Enter' to continue with playbook"
-    - name: Change status of ServiceNow problem to Fix in Progress
+    - name: "Change status of ServiceNow problem to Fix in Progress"
       servicenow.itsm.problem:
         instance:
           host: "{{ servicenow_host }}"
@@ -81,7 +81,7 @@
           Resolved issue by applying missing configuration to device.
     - ansible.builtin.pause:
         prompt: "Press 'Enter' to continue with playbook"
-    - name: Resolve ServiceNow problem
+    - name: "Resolve ServiceNow problem"
       servicenow.itsm.problem:
         instance:
           host: "{{ servicenow_host }}"

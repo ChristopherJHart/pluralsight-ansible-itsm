@@ -1,5 +1,5 @@
 ---
-- name: Create, update, and close a Jira problem
+- name: "Create, update, and close a Jira problem"
   hosts: localhost
   gather_facts: false
   tasks:

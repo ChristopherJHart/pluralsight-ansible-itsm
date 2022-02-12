@@ -1,9 +1,9 @@
 ---
-- name: Create, update, and close ServiceNow change request
+- name: "Create, update, and close ServiceNow change request"
   hosts: localhost
   gather_facts: false
   tasks:
-    - name: Create ServiceNow change request
+    - name: "Create ServiceNow change request"
       servicenow.itsm.change_request:
         instance:
           host: "{{ servicenow_host }}"
@@ -28,7 +28,7 @@
         var: results.record.number
     - ansible.builtin.pause:
         prompt: "Press 'Enter' to continue with playbook"
-    - name: Schedule ServiceNow change request
+    - name: "Schedule ServiceNow change request"
       servicenow.itsm.change_request:
         instance:
           host: "{{ servicenow_host }}"
@@ -43,7 +43,7 @@
           end_date: "2022-01-03 15:00:00"  # UTC timezone
     - ansible.builtin.pause:
         prompt: "Press 'Enter' to continue with playbook"
-    - name: Change status of ServiceNow change request to Implement
+    - name: "Change status of ServiceNow change request to Implement"
       servicenow.itsm.change_request:
         instance:
           host: "{{ servicenow_host }}"
@@ -56,7 +56,7 @@
           work_notes: "Implemented change request as desired."
     - ansible.builtin.pause:
         prompt: "Press 'Enter' to continue with playbook"
-    - name: Change status of ServiceNow change request to Review
+    - name: "Change status of ServiceNow change request to Review"
       servicenow.itsm.change_request:
         instance:
           host: "{{ servicenow_host }}"
@@ -67,7 +67,7 @@
         assignment_group: "Network"
     - ansible.builtin.pause:
         prompt: "Press 'Enter' to continue with playbook"
-    - name: Change status of ServiceNow change request to Closed
+    - name: "Change status of ServiceNow change request to Closed"
       servicenow.itsm.change_request:
         instance:
           host: "{{ servicenow_host }}"

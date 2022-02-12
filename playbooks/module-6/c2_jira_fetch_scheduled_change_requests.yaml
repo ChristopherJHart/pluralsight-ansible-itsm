@@ -1,9 +1,9 @@
 ---
-- name: Create and schedule Jira change request to implement OSPF changes
+- name: "Create and schedule Jira change request to implement OSPF changes"
   hosts: localhost
   gather_facts: true
   tasks:
-    - name: Create Jira change request to implement OSPF changes
+    - name: "Create Jira change request to implement OSPF changes"
       community.general.jira:
         uri: "{{ jira_uri }}"
         username: "{{ jira_username }}"
@@ -23,7 +23,7 @@
           labels:
             - ansible
       register: cr_results
-    - name: Show playbook execution date
+    - name: "Show playbook execution date"
       ansible.builtin.debug:
         var: ansible_date_time.iso8601
     - ansible.builtin.pause:
@@ -68,7 +68,7 @@
           {{ final_cr_results.meta.fields.customfield_10045 }}.
     - ansible.builtin.pause:
         prompt: "Press 'Enter' to continue with playbook"
-- name: Fetch Jira change requests created
+- name: "Fetch Jira change requests created"
   hosts: localhost
   gather_facts: true
   tasks:
@@ -108,7 +108,7 @@
     - name: "End playbook if no Change Requests exist"
       ansible.builtin.meta: end_play
       when: cr_results.meta.issues | length == 0
-    - name: Show data about scheduled Change Requests to be worked by Ansible
+    - name: "Show data about scheduled Change Requests to be worked by Ansible"
       ansible.builtin.debug:
         msg: >-
           Change Request {{ item.key }} opened at {{ item.fields.created }}

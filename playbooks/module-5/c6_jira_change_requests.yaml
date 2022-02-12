@@ -1,9 +1,9 @@
 ---
-- name: Create, update, and close a Jira change request
+- name: "Create, update, and close a Jira change request"
   hosts: localhost
   gather_facts: false
   tasks:
-    - name: Create Jira change request
+    - name: "Create Jira change request"
       community.general.jira:
         uri: "{{ jira_uri }}"
         username: "{{ jira_username }}"

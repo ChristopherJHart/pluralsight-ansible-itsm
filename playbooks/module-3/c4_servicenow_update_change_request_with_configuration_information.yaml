@@ -1,17 +1,18 @@
 ---
-- name: Remove OSPF network from Boston
+- name: "Remove OSPF network from Boston"
   hosts: boston.chrisjhart.net
   gather_facts: false
   tasks:
-    - name: Remove OSPF network from Boston
+    - name: "Remove OSPF network from Boston"
       cisco.ios.ios_config:
         lines: no network 192.168.4.0 0.0.0.255 area 0
         parents: router ospf 1
-- name: Create and schedule ServiceNow change request to implement OSPF changes
+- name: >-
+    Create and schedule ServiceNow change request to implement OSPF changes
   hosts: localhost
   gather_facts: true
   tasks:
-    - name: Create ServiceNow change request to implement OSPF changes
+    - name: "Create ServiceNow change request to implement OSPF changes"
       servicenow.itsm.change_request:
         instance:
           host: "{{ servicenow_host }}"
@@ -32,7 +33,7 @@
         other:
           cmdb_ci: "f3b56a0807010110631efc289c1ed037"
       register: created_cr_results
-    - name: Schedule ServiceNow change request to implement OSPF changes
+    - name: "Schedule ServiceNow change request to implement OSPF changes"
       servicenow.itsm.change_request:
         instance:
           host: "{{ servicenow_host }}"
@@ -56,11 +57,11 @@
           in Boston. Scheduled start date is
           {{ created_cr_results.record.start_date }} and scheduled end date is
           {{ created_cr_results.record.end_date }}.
-- name: Fetch ServiceNow change requests created
+- name: "Fetch ServiceNow change requests created"
   hosts: localhost
   gather_facts: true
   tasks:
-    - name: Define threshold datetime for scheduled Change Request start date
+    - name: "Define threshold datetime for scheduled Change Request start date"
       ansible.builtin.set_fact:
         change_request_start_date_threshold: >-
           {{ ansible_date_time.iso8601
@@ -72,7 +73,7 @@
         playbook_execution_time: >-
           {{ ansible_date_time.iso8601
           | iso8601_to_servicenow_datetime_format }}
-    - name: Fetch recent ServiceNow change requests
+    - name: "Fetch recent ServiceNow change requests"
       servicenow.itsm.change_request_info:
         instance:
           host: "{{ servicenow_host }}"
@@ -87,10 +88,10 @@
         msg: >-
           Found {{ cr_results.records | length }} Change Request(s) matching
           conditions
-    - name: End playbook if no Change Requests exist
+    - name: "End playbook if no Change Requests exist"
       ansible.builtin.meta: end_play
       when: cr_results.records | length == 0
-    - name: Show data about scheduled Change Requests to be worked by Ansible
+    - name: "Show data about scheduled Change Requests to be worked by Ansible"
       ansible.builtin.debug:
         msg: >-
           Change Request {{ item.number }} opened at {{ item.opened_at }}
@@ -99,7 +100,7 @@
       with_items: "{{ cr_results.records }}"
       loop_control:
         label: "{{ item.number }}"
-    - name: Assign Change Request to Ansible and update notes
+    - name: "Assign Change Request to Ansible and update notes"
       servicenow.itsm.change_request:
         instance:
           host: "{{ servicenow_host }}"
@@ -113,7 +114,7 @@
           work_notes: >-
             Implementing OSPF configuration change based on information in
             Change Request.
-    - name: Fetch Configuration Item for IP Network
+    - name: "Fetch Configuration Item for IP Network"
       servicenow.itsm.configuration_item_info:
         instance:
           host: "{{ servicenow_host }}"
@@ -132,7 +133,7 @@
         wildcard_mask: >-
           {{ ci_ip_network_results.records[0].subnet
           | ansible.netcommon.ipaddr('hostmask') }}
-    - name: Fetch Configuration item for Router
+    - name: "Fetch Configuration item for Router"
       servicenow.itsm.configuration_item_info:
         instance:
           host: "{{ servicenow_host }}"
@@ -141,10 +142,10 @@
         sys_class_name: "cmdb_ci_ip_router"
         sys_id: "{{ ci_ip_network_results.records[0].router }}"
       register: ci_router_results
-    - name: Define FQDN/IP address of OSPF router associated with OSPF network
+    - name: "Define FQDN/IP address of OSPF router associated with OSPF network"
       ansible.builtin.set_fact:
         router_to_configure: "{{ ci_router_results.records[0].ip_address }}"
-- name: Apply OSPF host-facing configuration to relevant router
+- name: "Apply OSPF host-facing configuration to relevant router"
   hosts: routers
   gather_facts: false
   tasks:
@@ -163,7 +164,7 @@
             LSA is not present prior to configuration. Configure OSPF network
             on {{ hostvars['localhost']['router_to_configure'] }} and validate
           block:
-            - name: Configure OSPF network on device
+            - name: "Configure OSPF network on device"
               cisco.ios.ios_ospfv2:
                 config:
                   processes:
@@ -221,7 +222,7 @@
                 Roll back changes and update Change Request with information if
                 change is unsuccessful
               block:
-                - name: Roll back OSPF configuration changes
+                - name: "Roll back OSPF configuration changes"
                   cisco.ios.ios_ospfv2:
                     config:
                       processes:
@@ -239,7 +240,7 @@
                   cisco.ios.ios_command:
                     commands: "show running-config | section router ospf"
                   register: ospf_configuration_after_rollback
-                - name: Update Change Request with relevant information
+                - name: "Update Change Request with relevant information"
                   servicenow.itsm.change_request:
                     instance:
                       host: "{{ servicenow_host }}"
@@ -284,7 +285,7 @@
           when: >-
             hostvars['localhost']['network_address']
             not in routing_output_before_configuration.stdout[0]
-        - name: Update Change Request if change does not seem valid
+        - name: "Update Change Request if change does not seem valid"
           servicenow.itsm.change_request:
             instance:
               host: "{{ servicenow_host }}"

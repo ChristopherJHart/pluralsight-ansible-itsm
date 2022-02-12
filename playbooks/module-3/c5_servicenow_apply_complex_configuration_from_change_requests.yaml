@@ -1,18 +1,19 @@
 ---
-- name: Remove OSPF network from Boston
+- name: "Remove OSPF network from Boston"
   hosts: boston.chrisjhart.net
   gather_facts: false
   tasks:
-    - name: Remove OSPF network from Boston
+    - name: "Remove OSPF network from Boston"
       cisco.ios.ios_config:
         lines:
           - no network 192.168.4.0 0.0.0.255 area 0
         parents: router ospf 1
-- name: Create and schedule ServiceNow change request to implement OSPF changes
+- name: >-
+    Create and schedule ServiceNow change request to implement OSPF changes
   hosts: localhost
   gather_facts: true
   tasks:
-    - name: Create ServiceNow change request to implement OSPF changes
+    - name: "Create ServiceNow change request to implement OSPF changes"
       servicenow.itsm.change_request:
         instance:
           host: "{{ servicenow_host }}"
@@ -41,7 +42,7 @@
           test_plan: >
             show ip ospf database router | include 192.168.4.0
       register: created_cr_results
-    - name: Schedule ServiceNow change request to implement OSPF changes
+    - name: "Schedule ServiceNow change request to implement OSPF changes"
       servicenow.itsm.change_request:
         instance:
           host: "{{ servicenow_host }}"
@@ -67,11 +68,11 @@
           {{ created_cr_results.record.end_date }}.
     - ansible.builtin.pause:
         prompt: "Press 'Enter' to continue with playbook"
-- name: Fetch ServiceNow change requests created
+- name: "Fetch ServiceNow change requests created"
   hosts: localhost
   gather_facts: true
   tasks:
-    - name: Define threshold datetime for scheduled Change Request start date
+    - name: "Define threshold datetime for scheduled Change Request start date"
       ansible.builtin.set_fact:
         change_request_start_date_threshold: >-
           {{ ansible_date_time.iso8601
@@ -83,7 +84,7 @@
         playbook_execution_time: >-
           {{ ansible_date_time.iso8601
           | iso8601_to_servicenow_datetime_format }}
-    - name: Fetch recent ServiceNow change requests
+    - name: "Fetch recent ServiceNow change requests"
       servicenow.itsm.change_request_info:
         instance:
           host: "{{ servicenow_host }}"
@@ -98,10 +99,10 @@
         msg: >-
           Found {{ cr_results.records | length }} Change Request(s) matching
           conditions
-    - name: End playbook if no Change Requests exist
+    - name: "End playbook if no Change Requests exist"
       ansible.builtin.meta: end_play
       when: cr_results.records | length == 0
-    - name: Show data about scheduled Change Requests to be worked by Ansible
+    - name: "Show data about scheduled Change Requests to be worked by Ansible"
       ansible.builtin.debug:
         msg: >-
           Change Request {{ item.number }} opened at {{ item.opened_at }}
@@ -110,7 +111,7 @@
       with_items: "{{ cr_results.records }}"
       loop_control:
         label: "{{ item.number }}"
-    - name: Assign Change Request to Ansible and update notes
+    - name: "Assign Change Request to Ansible and update notes"
       servicenow.itsm.change_request:
         instance:
           host: "{{ servicenow_host }}"
@@ -124,7 +125,7 @@
           work_notes: >-
             Implementing OSPF configuration change based on information in
             Change Request.
-    - name: Fetch Configuration item for Router
+    - name: "Fetch Configuration item for Router"
       servicenow.itsm.configuration_item_info:
         instance:
           host: "{{ servicenow_host }}"
@@ -135,7 +136,7 @@
       register: ci_router_results
     - ansible.builtin.set_fact:
         router_to_configure: "{{ ci_router_results.records[0].ip_address }}"
-- name: Apply configuration to relevant router
+- name: "Apply configuration to relevant router"
   hosts: routers
   gather_facts: false
   tasks:
@@ -143,14 +144,14 @@
         Apply configuration and test plan to relevant router. Roll back if
         necessary
       block:
-        - name: Apply configuration to relevant router
+        - name: "Apply configuration to relevant router"
           cisco.ios.ios_config:
             lines: >-
               {{ hostvars['localhost']['created_cr_results']['record']
               ['implementation_plan'] }}
         - ansible.builtin.pause:
             prompt: "Press 'Enter' to continue with playbook"
-        - name: Invoke test plan on relevant router
+        - name: "Invoke test plan on relevant router"
           cisco.ios.ios_command:
             commands: >-
               {{ hostvars['localhost']['created_cr_results']['record']
@@ -158,7 +159,7 @@
           register: test_output
         - ansible.builtin.pause:
             prompt: "Press 'Enter' to continue with playbook"
-        - name: Update Change Request with test plan results
+        - name: "Update Change Request with test plan results"
           servicenow.itsm.change_request:
             instance:
               host: "{{ servicenow_host }}"
@@ -175,7 +176,7 @@
                 {{ test_output.stdout[0] }}
         - ansible.builtin.pause:
             prompt: "Press 'Enter' to continue with playbook"
-        - name: Move Change Request to Review if test plan has output
+        - name: "Move Change Request to Review if test plan has output"
           servicenow.itsm.change_request:
             instance:
               host: "{{ servicenow_host }}"
@@ -196,12 +197,12 @@
             Roll back configuration changes and update Change Request if test
             plan does not have output
           block:
-            - name: Roll back configuration changes
+            - name: "Roll back configuration changes"
               cisco.ios.ios_config:
                 lines: >-
                   {{ hostvars['localhost']['created_cr_results']['record']
                   ['backout_plan'] }}
-            - name: Update Change Request accordingly
+            - name: "Update Change Request accordingly"
               servicenow.itsm.change_request:
                 instance:
                   host: "{{ servicenow_host }}"

@@ -1,9 +1,9 @@
 ---
-- name: Create, update, and close ServiceNow incident
+- name: "Create, update, and close ServiceNow incident"
   hosts: localhost
   gather_facts: false
   tasks:
-    - name: Create ServiceNow incident
+    - name: "Create ServiceNow incident"
       servicenow.itsm.incident:
         instance:
           host: "{{ servicenow_host }}"
@@ -26,7 +26,7 @@
         var: results.record.number
     - ansible.builtin.pause:
         prompt: "Press 'Enter' to continue with playbook"
-    - name: Assign ServiceNow incident to Ansible
+    - name: "Assign ServiceNow incident to Ansible"
       servicenow.itsm.incident:
         instance:
           host: "{{ servicenow_host }}"
@@ -37,7 +37,7 @@
           assigned_to: "ansible"
     - ansible.builtin.pause:
         prompt: "Press 'Enter' to continue with playbook"
-    - name: Change status of ServiceNow incident to In-Progress
+    - name: "Change status of ServiceNow incident to In-Progress"
       servicenow.itsm.incident:
         instance:
           host: "{{ servicenow_host }}"
@@ -47,7 +47,7 @@
         state: "in_progress"
     - ansible.builtin.pause:
         prompt: "Press 'Enter' to continue with playbook"
-    - name: Add notes to ServiceNow incident
+    - name: "Add notes to ServiceNow incident"
       servicenow.itsm.incident:
         instance:
           host: "{{ servicenow_host }}"
@@ -60,7 +60,7 @@
             yet determined the root cause of the issue.
     - ansible.builtin.pause:
         prompt: "Press 'Enter' to continue with playbook"
-    - name: Close ServiceNow incident
+    - name: "Close ServiceNow incident"
       servicenow.itsm.incident:
         instance:
           host: "{{ servicenow_host }}"
