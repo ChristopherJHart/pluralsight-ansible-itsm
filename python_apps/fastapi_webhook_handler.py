@@ -18,17 +18,17 @@ async def servicenow_connectivity_issue_webhook(
 ) -> None:
     """Execute Ansible automation that troubleshoots a connectivity issue defined in ServiceNow."""
     global worked_issues
-    body = await request.json()
-    # Uncomment the below if you would like to see the full body of the webhook
-    # from pprint import pprint
-    # pprint(body)
-
     if servicenow_record in worked_issues:
         print(
             f"Ignoring received webhook for ServiceNow record {servicenow_record} because we have "
             "already worked it"
         )
         return
+
+    body = await request.json()
+    # Uncomment the below if you would like to see the full body of the webhook
+    # from pprint import pprint
+    # pprint(body)
 
     record_creator = body["reported_by_email"]
     source_ip = body["source_ip"]
@@ -41,13 +41,13 @@ async def servicenow_connectivity_issue_webhook(
 
     # Uncomment the below if you would like to run the basic connectivity issue troubleshooting
     # Ansible playbook.
-    # background_tasks.add_task(
-    #     execute_ansible_playbook,
-    #     "playbooks/module-4/c4_servicenow_basic_connectivity_issue_troubleshooting.yaml",
-    #     source_ip,
-    #     destination_ip,
-    #     extra_variables={"servicenow_record": servicenow_record},
-    # )
+    background_tasks.add_task(
+        execute_ansible_playbook,
+        "playbooks/module-4/c4_servicenow_basic_connectivity_issue_troubleshooting.yaml",
+        source_ip,
+        destination_ip,
+        extra_variables={"servicenow_record": servicenow_record},
+    )
 
     # Uncomment the below if you would like to run the advanced connectivity issue troubleshooting
     # Ansible playbook.
@@ -61,13 +61,13 @@ async def servicenow_connectivity_issue_webhook(
 
     # Uncomment the below if you would like to run the advanced connectivity issue troubleshooting
     # and automatic incident resolution Ansible playbook.
-    background_tasks.add_task(
-        execute_ansible_playbook,
-        "playbooks/module-4/c6_servicenow_connectivity_issue_resolution.yaml",
-        source_ip,
-        destination_ip,
-        extra_variables={"servicenow_record": servicenow_record},
-    )
+    # background_tasks.add_task(
+    #     execute_ansible_playbook,
+    #     "playbooks/module-4/c6_servicenow_connectivity_issue_resolution.yaml",
+    #     source_ip,
+    #     destination_ip,
+    #     extra_variables={"servicenow_record": servicenow_record},
+    # )
 
 
 @app.post("/jira/{jira_issue_key}", status_code=200)
@@ -76,11 +76,6 @@ async def jira_connectivity_issue_webhook(
 ) -> None:
     """Execute Ansible automation that troubleshoots a connectivity issue defined in Jira."""
     global worked_issues
-    body = await request.json()
-    # Uncomment the below if you would like to see the full body of the webhook
-    # from pprint import pprint
-    # pprint(body)
-
     if jira_issue_key in worked_issues:
         print(
             f"Ignoring received webhook for Jira issue {jira_issue_key} because we have already "
@@ -88,25 +83,29 @@ async def jira_connectivity_issue_webhook(
         )
         return
 
+    body = await request.json()
+    # Uncomment the below if you would like to see the full body of the webhook
+    # from pprint import pprint
+    # pprint(body)
+
     issue_creator = body["user"]["displayName"]
     source_ip = body["issue"]["fields"]["customfield_10060"]
     destination_ip = body["issue"]["fields"]["customfield_10061"]
     print(
-        f"Received webhook for Jira issue {jira_issue_key} created by "
-        f"{issue_creator}. Need to troubleshoot connectivity between "
-        f"{source_ip} and {destination_ip}."
+        f"Received webhook for Jira issue {jira_issue_key} created by {issue_creator}. Need to "
+        f"troubleshoot connectivity between {source_ip} and {destination_ip}."
     )
     worked_issues.append(jira_issue_key)
 
     # Uncomment the below if you would like to run the basic connectivity issue troubleshooting
     # Ansible playbook.
-    # background_tasks.add_task(
-    #     execute_ansible_playbook,
-    #     "playbooks/module-7/c4_jira_basic_connectivity_issue_troubleshooting.yaml",
-    #     source_ip,
-    #     destination_ip,
-    #     extra_variables={"jira_issue_key": jira_issue_key},
-    # )
+    background_tasks.add_task(
+        execute_ansible_playbook,
+        "playbooks/module-7/c4_jira_basic_connectivity_issue_troubleshooting.yaml",
+        source_ip,
+        destination_ip,
+        extra_variables={"jira_issue_key": jira_issue_key},
+    )
 
     # Uncomment the below if you would like to run the advanced connectivity issue troubleshooting
     # Ansible playbook.
@@ -120,13 +119,13 @@ async def jira_connectivity_issue_webhook(
 
     # Uncomment the below if you would like to run the advanced connectivity issue troubleshooting
     # and automatic incident resolution Ansible playbook.
-    background_tasks.add_task(
-        execute_ansible_playbook,
-        "playbooks/module-7/c6_jira_connectivity_issue_resolution.yaml",
-        source_ip,
-        destination_ip,
-        extra_variables={"jira_issue_key": jira_issue_key},
-    )
+    # background_tasks.add_task(
+    #     execute_ansible_playbook,
+    #     "playbooks/module-7/c6_jira_connectivity_issue_resolution.yaml",
+    #     source_ip,
+    #     destination_ip,
+    #     extra_variables={"jira_issue_key": jira_issue_key},
+    # )
 
 
 def execute_ansible_playbook(
