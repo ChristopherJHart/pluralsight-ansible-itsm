@@ -1,0 +1,25 @@
+---
+- name: "Create Jira connectivity issue incident"
+  hosts: localhost
+  gather_facts: true
+  tasks:
+    - name: "Create Jira connectivity issue incident"
+      community.general.jira:
+        uri: "{{ jira_uri }}"
+        username: "{{ jira_username }}"
+        password: "{{ jira_password }}"
+        project: "GLOB"
+        operation: "create"
+        summary: >-
+          Cannot ICMP ping from 192.168.1.10 to 192.168.4.10
+        description: >
+          I need assistance troubleshooting a connectivity issue within the
+          Globomantics network. I'm not able to perform an ICMP ping from host
+          192.168.1.10 in Raleigh to host 192.168.4.10 in Boston.
+        issuetype: "Connectivity Issue"
+        fields:
+          customfield_10060: "192.168.1.10"
+          customfield_10061: "192.168.4.10"
+          labels:
+            - ansible
+      register: cr_results

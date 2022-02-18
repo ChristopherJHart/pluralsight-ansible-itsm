@@ -1,0 +1,15 @@
+---
+- name: "Create Jira connectivity issue incident"
+  hosts: localhost
+  gather_facts: true
+  tasks:
+    - name: "Create Jira connectivity issue incident"
+      community.general.jira:
+        uri: "{{ jira_uri }}"
+        username: "{{ jira_username }}"
+        password: "{{ jira_password }}"
+        issue: "GLOB-118"
+        operation: "fetch"
+      register: results
+    - ansible.builtin.debug:
+        var: results

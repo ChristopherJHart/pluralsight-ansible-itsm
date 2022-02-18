@@ -1,0 +1,402 @@
+---
+- name: >-
+    Assign ownership of Jira Connectivity Issue incident to Ansible account and
+    change status to In Progress.
+  hosts: localhost
+  tasks:
+    - name: "Assign ownership of Jira Connectivity Issue incident"
+      community.general.jira:
+        uri: "{{ jira_uri }}"
+        username: "{{ jira_username }}"
+        password: "{{ jira_password }}"
+        issue: "{{ jira_issue_key }}"
+        operation: "edit"
+        account_id: "70121:2dbae1f5-6dca-4b0f-bc3d-353c20e542d2"
+    - name: >-
+        Assign ownership of Jira Connectivity Issue incident and change status
+        to In Progress
+      community.general.jira:
+        uri: "{{ jira_uri }}"
+        username: "{{ jira_username }}"
+        password: "{{ jira_password }}"
+        issue: "{{ jira_issue_key }}"
+        operation: "transition"
+        status: "Start Progress"
+        comment: "Attempting to automatically identify root cause of issue."
+- name: >-
+    Troubleshoot connectivity between a source IP address and a destination IP
+    address
+  hosts: routers
+  tasks:
+    - name: "Fetch IP interface information from routers"
+      ansible.utils.cli_parse:
+        command: "show ip interface"
+        parser:
+          name: "ansible.netcommon.ntc_templates"
+      register: interface_info
+    - name: "Identify ingress router and interface"
+      ansible.builtin.set_fact:
+        ingress_interface: "{{ item }}"
+        ingress_router: "{{ inventory_hostname }}"
+      when: >-
+        item.ipaddr
+        and item.mask
+        and source_ip
+        | ipaddr(item.ipaddr[0] + "/" + item.mask[0])
+        | ipaddr("bool")
+      with_items: "{{ interface_info.parsed }}"
+    - name: "Identify egress router and interface"
+      ansible.builtin.set_fact:
+        egress_interface: "{{ item }}"
+        egress_router: "{{ inventory_hostname }}"
+      when: >-
+        item.ipaddr
+        and item.mask
+        and destination_ip
+        | ipaddr(item.ipaddr[0] + "/" + item.mask[0])
+        | ipaddr("bool")
+      with_items: "{{ interface_info.parsed }}"
+    - name: "Troubleshoot connectivity issue on ingress router"
+      block:
+        - name: >-
+            Fix connectivity issue and update Jira Connectivity Issue incident
+          block:
+            - name: "Bring interface up"
+              cisco.ios.ios_interfaces:
+                config:
+                  - name: "{{ ingress_interface.intf }}"
+                    enabled: true
+            - name: "Wait for interface to come back up before pinging"
+              ansible.builtin.pause:
+                seconds: 5
+            - name: >-
+                Fetch and parse interface status from ingress router after
+                configuration change
+              ansible.utils.cli_parse:
+                command: "show ip interface brief"
+                parser:
+                  name: "ansible.netcommon.ntc_templates"
+              register: ingress_interface_info_after_change
+            - name: "Ping source IP from ingress router to prime ARP"
+              cisco.ios.ios_ping:
+                dest: "{{ source_ip }}"
+              ignore_errors: true
+            - name: "Ping source IP from ingress router"
+              cisco.ios.ios_ping:
+                dest: "{{ source_ip }}"
+              ignore_errors: true
+              register: ingress_ping_source_ip
+            - name: "Ping destination IP from ingress router to prime ARP"
+              cisco.ios.ios_ping:
+                dest: "{{ destination_ip }}"
+              ignore_errors: true
+            - name: "Ping destination IP from ingress router"
+              cisco.ios.ios_ping:
+                dest: "{{ destination_ip }}"
+              ignore_errors: true
+              register: ingress_ping_destination_ip
+            - name: "Resolve Jira Connectivity Issue incident"
+              community.general.jira:
+                uri: "{{ jira_uri }}"
+                username: "{{ jira_username }}"
+                password: "{{ jira_password }}"
+                issue: "{{ jira_issue_key }}"
+                operation: "transition"
+                status: "Resolve Issue"
+                comment: >-
+                  The ingress router for flows from {{ source_ip }} to
+                  {{ destination_ip }} has been identified as
+                  {{ ingress_router }} based on the router's interface
+                  configuration.
+
+
+                  This router is a Cisco {{ ansible_net_model }} running IOS-XE
+                  {{ ansible_net_version }} with serial number
+                  {{ ansible_net_serialnum }}.
+
+
+                  The ingress interface {{ ingress_interface.intf }} for
+                  {{ source_ip }} was found to be administratively shut down.
+
+
+                  {noformat}
+                  `show ip interface brief`
+
+                  {{ interface_info.stdout }}
+                  {noformat}
+
+                  This interface was automatically brought administratively up.
+                  The interface is now up as expected.
+
+
+                  {noformat}
+                  `show ip interface brief`
+
+                  {{ ingress_interface_info_after_change.stdout }}
+                  {noformat}
+
+                  Issue should now be resolved, incident status has been
+                  updated accordingly.
+            - name: >-
+                Close Jira Connectivity Issue incident based on reachability
+                information
+              community.general.jira:
+                uri: "{{ jira_uri }}"
+                username: "{{ jira_username }}"
+                password: "{{ jira_password }}"
+                issue: "{{ jira_issue_key }}"
+                operation: "transition"
+                status: "Close Issue"
+                comment: >-
+                  {{ ingress_ping_source_ip.packets_tx }} ICMP Echo Request
+                  packets were sent from router {{ ingress_router }} to
+                  {{ source_ip }}, and {{ ingress_ping_source_ip.packets_rx }}
+                  ICMP Echo Reply packets were received in response. This
+                  indicates that {{ ingress_router }} has reliable connectivity
+                  to {{ source_ip }}.
+
+                  {{ ingress_ping_destination_ip.packets_tx }} ICMP Echo
+                  Request packets were sent from router {{ ingress_router }} to
+                  {{ destination_ip }}, and
+                  {{ ingress_ping_destination_ip.packets_rx }} ICMP Echo Reply
+                  packets were received in response. This indicates that
+                  {{ ingress_router }} has reliable connectivity to
+                  {{ destination_ip }}.
+
+                  End-to-end reachability has been confirmed. Closing incident
+                  accordingly.
+              when: >-
+                ingress_ping_source_ip.packets_tx ==
+                ingress_ping_source_ip.packets_rx
+                and ingress_ping_destination_ip.packets_tx ==
+                ingress_ping_destination_ip.packets_rx
+          when: >-
+            ingress_interface is defined
+            and not ingress_interface.protocol_status == "up"
+            and not ingress_interface.link_status == "up"
+        - name: >-
+            Update Jira Connectivity Issue incident with reachability
+            information if no issue is detected
+          block:
+            - name: "Ping source IP from ingress router"
+              cisco.ios.ios_ping:
+                dest: "{{ source_ip }}"
+              ignore_errors: true
+              register: ingress_ping_source_ip
+            - name: "Ping destination IP from ingress router"
+              cisco.ios.ios_ping:
+                dest: "{{ destination_ip }}"
+              ignore_errors: true
+              register: ingress_ping_destination_ip
+            - name: >-
+                Update Jira Connectivity Issue incident with reachability
+                information
+              community.general.jira:
+                uri: "{{ jira_uri }}"
+                username: "{{ jira_username }}"
+                password: "{{ jira_password }}"
+                issue: "{{ jira_issue_key }}"
+                operation: "comment"
+                comment: >-
+                  {{ ingress_ping_source_ip.packets_tx }} ICMP Echo Request
+                  packets were sent from router {{ ingress_router }} to
+                  {{ source_ip }}, and {{ ingress_ping_source_ip.packets_rx }}
+                  ICMP Echo Reply packets were received in response. This
+                  indicates that {{ ingress_router }} has reliable connectivity
+                  to {{ source_ip }}.
+
+                  {{ ingress_ping_destination_ip.packets_tx }} ICMP Echo
+                  Request packets were sent from router {{ ingress_router }} to
+                  {{ destination_ip }}, and
+                  {{ ingress_ping_destination_ip.packets_rx }} ICMP Echo Reply
+                  packets were received in response. This indicates that
+                  {{ ingress_router }} has reliable connectivity to
+                  {{ destination_ip }}.
+
+                  End-to-end reachability has been confirmed on the ingress
+                  router.
+              when: >-
+                ingress_ping_source_ip.packets_tx ==
+                ingress_ping_source_ip.packets_rx
+                and ingress_ping_destination_ip.packets_tx ==
+                ingress_ping_destination_ip.packets_rx
+          when: >-
+            ingress_interface is defined
+            and ingress_interface.protocol_status == "up"
+            and ingress_interface.link_status == "up"
+      when: ingress_router is defined and ingress_router == inventory_hostname
+
+    - name: "Troubleshoot connectivity issue on egress router"
+      block:
+        - name: >-
+            Fix connectivity issue and update Jira Connectivity Issue incident
+          block:
+            - name: "Bring interface up"
+              cisco.ios.ios_interfaces:
+                config:
+                  - name: "{{ egress_interface.intf }}"
+                    enabled: true
+            - name: "Wait for interface to come back up before pinging"
+              ansible.builtin.pause:
+                seconds: 5
+            - name: >-
+                Fetch and parse interface status from egress router after
+                configuration change
+              ansible.utils.cli_parse:
+                command: "show ip interface brief"
+                parser:
+                  name: "ansible.netcommon.ntc_templates"
+              register: egress_interface_info_after_change
+            - name: "Ping source IP from egress router to prime ARP"
+              cisco.ios.ios_ping:
+                dest: "{{ source_ip }}"
+              ignore_errors: true
+            - name: "Ping source IP from egress router"
+              cisco.ios.ios_ping:
+                dest: "{{ source_ip }}"
+              ignore_errors: true
+              register: egress_ping_source_ip
+            - name: "Ping destination IP from egress router to prime ARP"
+              cisco.ios.ios_ping:
+                dest: "{{ destination_ip }}"
+              ignore_errors: true
+            - name: "Ping destination IP from egress router"
+              cisco.ios.ios_ping:
+                dest: "{{ destination_ip }}"
+              ignore_errors: true
+              register: egress_ping_destination_ip
+            - name: "Resolve Jira Connectivity Issue incident"
+              community.general.jira:
+                uri: "{{ jira_uri }}"
+                username: "{{ jira_username }}"
+                password: "{{ jira_password }}"
+                issue: "{{ jira_issue_key }}"
+                operation: "transition"
+                status: "Resolve Issue"
+                comment: >-
+                  The egress router for flows from {{ source_ip }} to
+                  {{ destination_ip }} has been identified as
+                  {{ egress_router }} based on the router's interface
+                  configuration.
+
+
+                  This router is a Cisco {{ ansible_net_model }} running IOS-XE
+                  {{ ansible_net_version }} with serial number
+                  {{ ansible_net_serialnum }}.
+
+
+                  The egress interface {{ egress_interface_name }} for
+                  {{ destination_ip }} was found to be administratively shut
+                  down.
+
+
+                  {noformat}
+                  `show ip interface brief`
+
+                  {{ interface_info.stdout }}
+                  {noformat}
+
+                  This interface was automatically brought administratively up.
+                  The interface is now up as expected.
+
+
+                  {noformat}
+                  `show ip interface brief`
+
+                  {{ egress_interface_info_after_change.stdout }}
+                  {noformat}
+
+                  Issue should now be resolved, incident status has been
+                  updated accordingly.
+            - name: >-
+                Close Jira Connectivity Issue incident based on reachability
+                information
+              community.general.jira:
+                uri: "{{ jira_uri }}"
+                username: "{{ jira_username }}"
+                password: "{{ jira_password }}"
+                issue: "{{ jira_issue_key }}"
+                operation: "transition"
+                status: "Close Issue"
+                comment: >-
+                  {{ egress_ping_source_ip.packets_tx }} ICMP Echo Request
+                  packets were sent from router {{ egress_router }} to
+                  {{ source_ip }}, and {{ egress_ping_source_ip.packets_rx }}
+                  ICMP Echo Reply packets were received in response. This
+                  indicates that {{ egress_router }} has reliable connectivity
+                  to {{ source_ip }}.
+
+
+                  {{ egress_ping_destination_ip.packets_tx }} ICMP Echo
+                  Request packets were sent from router {{ egress_router }} to
+                  {{ destination_ip }}, and
+                  {{ egress_ping_destination_ip.packets_rx }} ICMP Echo Reply
+                  packets were received in response. This indicates that
+                  {{ egress_router }} has reliable connectivity to
+                  {{ destination_ip }}.
+
+
+                  End-to-end reachability has been confirmed. Closing incident
+                  accordingly.
+              when: >-
+                egress_ping_source_ip.packets_tx ==
+                egress_ping_source_ip.packets_rx
+                and egress_ping_destination_ip.packets_tx ==
+                egress_ping_destination_ip.packets_rx
+          when: >-
+            egress_interface is defined
+            and not egress_interface.protocol_status == "up"
+            and not egress_interface.link_status == "up"
+        - name: >-
+            Update Jira Connectivity Issue incident with reachability
+            information if no issue is detected
+          block:
+            - name: "Ping source IP from egress router"
+              cisco.ios.ios_ping:
+                dest: "{{ source_ip }}"
+              ignore_errors: true
+              register: egress_ping_source_ip
+            - name: "Ping destination IP from egress router"
+              cisco.ios.ios_ping:
+                dest: "{{ destination_ip }}"
+              ignore_errors: true
+              register: egress_ping_destination_ip
+            - name: >-
+                Update Jira Connectivity Issue incident with reachability
+                information
+              community.general.jira:
+                uri: "{{ jira_uri }}"
+                username: "{{ jira_username }}"
+                password: "{{ jira_password }}"
+                issue: "{{ jira_issue_key }}"
+                operation: "comment"
+                comment: >-
+                  {{ egress_ping_source_ip.packets_tx }} ICMP Echo Request
+                  packets were sent from router {{ egress_router }} to
+                  {{ source_ip }}, and {{ egress_ping_source_ip.packets_rx }}
+                  ICMP Echo Reply packets were received in response. This
+                  indicates that {{ egress_router }} has reliable connectivity
+                  to {{ source_ip }}.
+
+
+                  {{ egress_ping_destination_ip.packets_tx }} ICMP Echo
+                  Request packets were sent from router {{ egress_router }} to
+                  {{ destination_ip }}, and
+                  {{ egress_ping_destination_ip.packets_rx }} ICMP Echo Reply
+                  packets were received in response. This indicates that
+                  {{ egress_router }} has reliable connectivity to
+                  {{ destination_ip }}.
+
+
+                  End-to-end reachability has been confirmed on the ingress
+                  router.
+              when: >-
+                egress_ping_source_ip.packets_tx ==
+                egress_ping_source_ip.packets_rx
+                and egress_ping_destination_ip.packets_tx ==
+                egress_ping_destination_ip.packets_rx
+          when: >-
+            egress_interface is defined
+            and egress_interface.protocol_status == "up"
+            and egress_interface.link_status == "up"
+      when: egress_router is defined and egress_router == inventory_hostname

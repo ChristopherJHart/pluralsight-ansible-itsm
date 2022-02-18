@@ -1,3 +1,7 @@
 ansible-base==2.10.15
 paramiko
 netaddr
+fastapi
+uvicorn
+ansible-runner
+ntc_templates

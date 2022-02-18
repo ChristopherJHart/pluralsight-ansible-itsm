@@ -2,3 +2,4 @@
 *.pyc
 collections/ansible_collections
 .vscode/
+artifacts/

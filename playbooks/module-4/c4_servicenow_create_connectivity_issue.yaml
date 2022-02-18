@@ -1,0 +1,21 @@
+---
+- name: "Create ServiceNow connectivity issue incident"
+  hosts: localhost
+  gather_facts: true
+  tasks:
+    - name: "Create ServiceNow connectivity issue incident"
+      servicenow.itsm.incident:
+        instance:
+          host: "{{ servicenow_host }}"
+          username: "{{ servicenow_username }}"
+          password: "{{ servicenow_password }}"
+        state: "new"
+        caller: "ansible"
+        short_description: >
+          Incident automatically opened by Ansible demonstrating how Ansible
+          can work an incident.
+        impact: "low"
+        urgency: "low"
+        other:
+          u_source_ip: "192.168.1.10"
+          u_destination_ip: "192.168.4.10"

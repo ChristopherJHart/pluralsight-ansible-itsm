@@ -1,0 +1,133 @@
+---
+- name: >-
+    Troubleshoot connectivity between a source IP address and a destination IP
+    address
+  hosts: routers
+  tasks:
+    - name: "Show playbook source IP address parameter"
+      ansible.builtin.debug:
+        var: source_ip
+    - name: "Show playbook destination IP address parameter"
+      ansible.builtin.debug:
+        var: destination_ip
+    - name: "Show key for Jira Connectivity Issue incident"
+      ansible.builtin.debug:
+        var: jira_issue_key
+    - name: "Identify router where source IP is attached"
+      cisco.ios.ios_command:
+        commands: "show ip cef {{ source_ip }} | include attached"
+      register: ingress_cef_output
+    - name: "Identify ingress router based on CEF output"
+      ansible.builtin.set_fact:
+        ingress_router: "{{ inventory_hostname }}"
+      when: ingress_cef_output.stdout[0]
+    - name: "Identify router where destination IP is attached"
+      cisco.ios.ios_command:
+        commands: "show ip cef {{ destination_ip }} | include attached"
+      register: egress_cef_output
+    - name: "Identify egress router based on CEF output"
+      ansible.builtin.set_fact:
+        egress_router: "{{ inventory_hostname }}"
+      when: egress_cef_output.stdout[0]
+    - name: "Show ingress router"
+      ansible.builtin.debug:
+        var: ingress_router
+      when: ingress_router is defined
+    - name: "Show egress router"
+      ansible.builtin.debug:
+        var: egress_router
+      when: egress_router is defined
+    - name: >-
+        Fetch information from ingress router and update Jira Connectivity
+        Issue incident accordingly
+      block:
+        - name: "Fetch CEF output for source IP address"
+          cisco.ios.ios_command:
+            commands: "show ip cef {{ source_ip }}"
+          register: ingress_cef_full_output
+        - name: "Fetch interface status from ingress router"
+          cisco.ios.ios_command:
+            commands: "show ip interface brief"
+          register: ingress_interface_info
+        - name: "Update Jira Connectivity Issue incident"
+          community.general.jira:
+            uri: "{{ jira_uri }}"
+            username: "{{ jira_username }}"
+            password: "{{ jira_password }}"
+            issue: "{{ jira_issue_key }}"
+            operation: "comment"
+            comment: >-
+              The ingress router for flows from {{ source_ip }} to
+              {{ destination_ip }} has been identified as {{ ingress_router }}
+              based on the router's CEF output:
+
+
+              {noformat}
+              `show ip cef {{ source_ip }}`
+
+              {{ ingress_cef_full_output.stdout[0] }}
+              {noformat}
+
+
+              This router is a Cisco {{ ansible_net_model }} running IOS-XE
+              {{ ansible_net_version }} with serial number
+              {{ ansible_net_serialnum }}.
+
+
+              The configured interfaces and their respective status on this
+              router are below:
+
+
+              {noformat}
+              `show ip interface brief`
+
+              {{ ingress_interface_info.stdout[0] }}
+              {noformat}
+      when: ingress_router is defined and ingress_router == inventory_hostname
+    - name: >-
+        Fetch information from egress router and update Jira Connectivity Issue
+        incident accordingly
+      block:
+        - name: "Fetch CEF output for source IP address"
+          cisco.ios.ios_command:
+            commands: "show ip cef {{ destination_ip }}"
+          register: egress_cef_full_output
+        - name: "Fetch interface status from egress router"
+          cisco.ios.ios_command:
+            commands: "show ip interface brief"
+          register: egress_interface_info
+        - name: "Update Jira Connectivity Issue incident"
+          community.general.jira:
+            uri: "{{ jira_uri }}"
+            username: "{{ jira_username }}"
+            password: "{{ jira_password }}"
+            issue: "{{ jira_issue_key }}"
+            operation: "comment"
+            comment: >-
+              The egress router for flows from {{ source_ip }} to
+              {{ destination_ip }} has been identified as {{ egress_router }}
+              based on the router's CEF output:
+
+
+              {noformat}
+              `show ip cef {{ source_ip }}`
+
+              {{ egress_cef_full_output.stdout[0] }}
+              {noformat}
+
+
+              This router is a Cisco {{ ansible_net_model }} running IOS-XE
+              {{ ansible_net_version }} with serial number
+              {{ ansible_net_serialnum }}.
+
+
+              The configured interfaces and their respective status on this
+              router are below:
+
+
+              {noformat}
+              `show ip interface brief`
+
+              {{ egress_interface_info.stdout[0] }}
+              {noformat}
+      when: egress_router is defined and egress_router == inventory_hostname
