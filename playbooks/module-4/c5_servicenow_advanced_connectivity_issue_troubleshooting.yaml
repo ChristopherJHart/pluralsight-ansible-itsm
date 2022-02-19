@@ -20,12 +20,6 @@
       ansible.builtin.set_fact:
         egress_router: "{{ inventory_hostname }}"
       when: egress_cef_output.stdout[0]
-    - name: "Identify network address of source IP"
-      ansible.builtin.set_fact:
-        source_network: "{{ source_ip | ipaddr('network') }}"
-    - name: "Identify network address of destination IP"
-      ansible.builtin.set_fact:
-        destination_network: "{{ destination_ip | ipaddr('network') }}"
     - name: "Fetch information from ingress router"
       block:
         - name: >-
