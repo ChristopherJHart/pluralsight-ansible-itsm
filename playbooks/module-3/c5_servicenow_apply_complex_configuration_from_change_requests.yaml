@@ -174,7 +174,9 @@
                 Test plan output from {{ inventory_hostname }}:
 
 
-                {{ test_output.stdout[0] }}
+                [code]<pre>
+                {{ test_output.stdout_lines[0] | join("<br />") }}
+                </pre>[/code]
         - ansible.builtin.pause:
             prompt: "Press 'Enter' to continue with playbook"
         - name: "Move Change Request to Review if test plan has output"

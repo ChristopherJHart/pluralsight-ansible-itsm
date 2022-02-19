@@ -203,13 +203,21 @@
                   Relevant LSA is present in the OSPF Link State Database.
 
 
+                  {noformat}
+                  `show ip ospf database router`
+
                   {{ routing_output_after_configuration.stdout[0] }}
+                  {noformat}
 
 
                   Current OSPF configuration:
 
 
+                  {noformat}
+                  `show running-config | section router ospf`
+
                   {{ ospf_configuration_after_configuration.stdout[0] }}
+                  {noformat}
               when: >-
                 hostvars['localhost']['network_address']
                 in routing_output_after_configuration.stdout[0]
@@ -251,7 +259,11 @@
                       Link State Database.
 
 
+                      {noformat}
+                      `show ip ospf database router`
+
                       {{ routing_output_after_configuration.stdout[0] }}
+                      {noformat}
 
 
                       This may indicate an issue with the interface owning
@@ -263,13 +275,21 @@
                       OSPF configuration during this broken state:
 
 
+                      {noformat}
+                      `show running-config | section router ospf`
+
                       {{ ospf_configuration_after_configuration.stdout[0] }}
+                      {noformat}
 
 
                       This OSPF configuration has been rolled back:
 
 
+                      {noformat}
+                      `show running-config | section router ospf`
+
                       {{ ospf_configuration_after_rollback.stdout[0] }}
+                      {noformat}
               when: >-
                 hostvars['localhost']['network_address']
                 not in routing_output_after_configuration.stdout[0]
@@ -292,7 +312,11 @@
               {{ hostvars['localhost']['router_to_configure'] }}:
 
 
+              {noformat}
+              `show ip ospf database router`
+
               {{ routing_output_before_configuration.stdout[0] }}
+              {noformat}
 
 
               This indicates that the network is already configured and being

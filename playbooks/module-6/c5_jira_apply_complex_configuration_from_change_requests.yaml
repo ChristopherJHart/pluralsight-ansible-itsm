@@ -186,7 +186,9 @@
               Test plan output from {{ inventory_hostname }}:
 
 
+              {noformat}
               {{ test_output.stdout[0] }}
+              {noformat}
         - name: "Move Change Request to Complete if test plan has output"
           community.general.jira:
             uri: "{{ jira_uri }}"

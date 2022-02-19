@@ -209,13 +209,21 @@
                     Relevant LSA is present in the OSPF Link State Database.
 
 
-                    {{ routing_output_after_configuration.stdout[0] }}
+                    [code]<pre>
+                    `show ip ospf database router`<br />
+                    {{ routing_output_after_configuration.stdout_lines[0]
+                    | join("<br />") }}
+                    </pre>[/code]
 
 
                     Current OSPF configuration:
 
 
-                    {{ ospf_configuration_after_configuration.stdout[0] }}
+                    [code]<pre>
+                    `show running-config | section router ospf`<br />
+                    {{ ospf_configuration_after_configuration.stdout_lines[0]
+                    | join("<br />") }}
+                    </pre>[/code]
               when: >-
                 hostvars['localhost']['network_address']
                 in routing_output_after_configuration.stdout[0]
@@ -253,32 +261,44 @@
                     assignment_group: "Network"
                     other:
                     work_notes: >-
-                        After configuring OSPF network
-                        {{ hostvars['localhost']['network_address'] }} on
-                        {{ hostvars['localhost']['router_to_configure'] }}, the
-                        Router LSA for this network was not present in the OSPF
-                        Link State Database.
+                      After configuring OSPF network
+                      {{ hostvars['localhost']['network_address'] }} on
+                      {{ hostvars['localhost']['router_to_configure'] }}, the
+                      Router LSA for this network was not present in the OSPF
+                      Link State Database.
 
 
-                        {{ routing_output_after_configuration.stdout[0] }}
+                      [code]<pre>
+                      `show ip ospf database router`<br />
+                      {{ routing_output_after_configuration.stdout_lines[0]
+                      | join("<br />") }}
+                      </pre>[/code]
 
 
-                        This may indicate an issue with the interface owning
-                        this network. For example, the interface may be down.
-                        Further investigation is needed to troubleshoot this
-                        issue.
+                      This may indicate an issue with the interface owning
+                      this network. For example, the interface may be down.
+                      Further investigation is needed to troubleshoot this
+                      issue.
 
 
-                        OSPF configuration during this broken state:
+                      OSPF configuration during this broken state:
 
 
-                        {{ ospf_configuration_after_configuration.stdout[0] }}
+                      [code]<pre>
+                      `show running-config | section router ospf`<br />
+                      {{ ospf_configuration_after_configuration.stdout_lines[0]
+                      | join("<br />") }}
+                      </pre>[/code]
 
 
-                        This OSPF configuration has been rolled back:
+                      This OSPF configuration has been rolled back:
 
 
-                        {{ ospf_configuration_after_rollback.stdout[0] }}
+                      [code]<pre>
+                      `show running-config | section router ospf`<br />
+                      {{ ospf_configuration_after_rollback.stdout_lines[0]
+                      | join("<br />") }}
+                      </pre>[/code]
               when: >-
                 hostvars['localhost']['network_address']
                 not in routing_output_after_configuration.stdout[0]
@@ -303,7 +323,11 @@
                 {{ hostvars['localhost']['router_to_configure'] }}:
 
 
-                {{ routing_output_before_configuration.stdout[0] }}
+                [code]<pre>
+                `show ip ospf database router`<br />
+                {{ routing_output_before_configuration.stdout_lines[0]
+                | join("<br />") }}
+                </pre>[/code]
 
 
                 This indicates that the network is already configured and being
