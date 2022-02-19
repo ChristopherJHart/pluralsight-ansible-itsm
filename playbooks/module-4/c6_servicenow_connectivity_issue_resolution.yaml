@@ -63,7 +63,7 @@
                     enabled: true
             - name: "Wait for interface to come back up before pinging"
               ansible.builtin.pause:
-                seconds: 5
+                seconds: 10
             - name: >-
                 Fetch and parse interface status from ingress router after
                 configuration change
@@ -176,8 +176,8 @@
                 ingress_ping_destination_ip.packets_rx
           when: >-
             ingress_interface is defined
-            and not ingress_interface.protocol_status == "up"
-            and not ingress_interface.link_status == "up"
+            and ingress_interface.protocol_status == "down"
+            and ingress_interface.link_status == "administratively down"
         - name: >-
             Update ServiceNow incident with reachability
             information if no issue is detected
@@ -355,8 +355,8 @@
                 egress_ping_destination_ip.packets_rx
           when: >-
             egress_interface is defined
-            and not egress_interface.protocol_status == "up"
-            and not egress_interface.link_status == "up"
+            and egress_interface.protocol_status == "down"
+            and egress_interface.link_status == "administratively down"
         - name: >-
             Update ServiceNow incident with reachability
             information if no issue is detected
