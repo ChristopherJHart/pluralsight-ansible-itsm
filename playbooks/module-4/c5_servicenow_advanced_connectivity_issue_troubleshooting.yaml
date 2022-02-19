@@ -20,7 +20,9 @@
       ansible.builtin.set_fact:
         egress_router: "{{ inventory_hostname }}"
       when: egress_cef_output.stdout[0]
-    - name: "Fetch information from ingress router"
+    - name: >-
+        Update ServiceNow incident with troubleshooting information from
+        ingress router
       block:
         - name: >-
             Update ServiceNow incident with basic information
@@ -207,8 +209,8 @@
                 </pre>[/code]
       when: ingress_router is defined and ingress_router == inventory_hostname
     - name: >-
-        Fetch information from egress router and update ServiceNow
-        incident accordingly
+        Update ServiceNow incident with troubleshooting information from
+        egress router
       block:
         - name: >-
             Update ServiceNow incident with basic information
