@@ -1,17 +1,17 @@
 ---
 # CML-related variables
-cml_host: "cml.chrisjhart.net"
-cml_username: "ansible"
-cml_password: "Password!123"
+cml_host: "cml-hostname-here"
+cml_username: "cml-username-here"
+cml_password: "cml-password-here"
 cml_lab_filename: "Pluralsight ITSM Course.yaml"
 cml_lab_filepath: "../files/{{ cml_lab_filename }}"
 
 # ServiceNow-related variables
-servicenow_host: "https://dev90380.service-now.com"
-servicenow_username: "ansible"
-servicenow_password: "Password!123"
+servicenow_host: "https://servicenow-instance-here.service-now.com"
+servicenow_username: "servicenow-username-here"
+servicenow_password: "servicenow-password-here"
 
 # Jira-related variables
-jira_uri: "https://chrisjhart.atlassian.net"
-jira_username: "christopherjhart95@gmail.com"
-jira_password: "7JCLs2zff9jPEUYim2Ki699F"
+jira_uri: "https://jira-instance-here.atlassian.net"
+jira_username: "jira-username-here"
+jira_password: "jira-token-here"
